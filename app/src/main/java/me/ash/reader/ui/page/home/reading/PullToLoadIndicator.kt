@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -40,14 +41,15 @@ fun BoxScope.PullToLoadIndicator(
     modifier: Modifier = Modifier,
     state: PullToLoadState,
     canLoadPrevious: Boolean = true,
-    canLoadNext: Boolean = true
+    canLoadNext: Boolean = true,
+    canRefresh: Boolean = false,
 ) {
     val hapticFeedback = LocalHapticFeedback.current
     val status = state.status
 
     LaunchedEffect(status) {
         when {
-            canLoadPrevious && status == PulledDown -> {
+            (canLoadPrevious || canRefresh) && status == PulledDown -> {
                 hapticFeedback.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
             }
 
@@ -63,7 +65,9 @@ fun BoxScope.PullToLoadIndicator(
     val absFraction = abs(fraction)
 
     val imageVector = when (status) {
-        PulledDown -> Icons.Rounded.KeyboardArrowUp
+        // Pulling down re-downloads the article rather than moving to the previous one, so an up
+        // arrow would promise the wrong thing.
+        PulledDown -> if (canRefresh) Icons.Rounded.Refresh else Icons.Rounded.KeyboardArrowUp
         PulledUp -> Icons.Rounded.KeyboardArrowDown
         else -> null
     }
@@ -74,7 +78,7 @@ fun BoxScope.PullToLoadIndicator(
         Alignment.TopCenter
     }
 
-    val visible = remember(status, canLoadPrevious, canLoadNext) {
+    val visible = remember(status, canLoadPrevious, canLoadNext, canRefresh) {
         when (status) {
             Idle -> {
                 false
@@ -85,7 +89,7 @@ fun BoxScope.PullToLoadIndicator(
             }
 
             PulledDown, PullingDown -> {
-                canLoadPrevious
+                canLoadPrevious || canRefresh
             }
         }
     }

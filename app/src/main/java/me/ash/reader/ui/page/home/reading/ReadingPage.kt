@@ -43,7 +43,6 @@ import kotlin.math.abs
 import kotlinx.coroutines.launch
 import me.ash.reader.R
 import me.ash.reader.infrastructure.android.TextToSpeechManager
-import me.ash.reader.infrastructure.preference.LocalPullToSwitchArticle
 import me.ash.reader.infrastructure.preference.LocalReadingAutoHideToolbar
 import me.ash.reader.infrastructure.preference.LocalReadingBoldCharacters
 import me.ash.reader.infrastructure.preference.LocalReadingTextLineHeight
@@ -70,7 +69,6 @@ fun ReadingPage(
 ) {
     val context = LocalContext.current
     val hapticFeedback = LocalHapticFeedback.current
-    val isPullToSwitchArticleEnabled = LocalPullToSwitchArticle.current.value
     val readingUiState = viewModel.readingUiState.collectAsStateValue()
     val readerState = viewModel.readerStateStateFlow.collectAsStateValue()
     val boldCharacters = LocalReadingBoldCharacters.current
@@ -116,7 +114,6 @@ fun ReadingPage(
                 }
 
                 val isNextArticleAvailable = readerState.nextArticle != null
-                val isPreviousArticleAvailable = readerState.previousArticle != null
 
                 if (readerState.articleId != null) {
                     // Content
@@ -173,10 +170,11 @@ fun ReadingPage(
                     ) {
                         remember { it }
                             .run {
-                                // While the full article is shown, pulling down re-downloads it
-                                // from the source instead of going to the previous article.
-                                val isShowingFullContent = content is ReaderState.FullContent
-
+                                // Pulling down re-downloads the article from its own site, whatever
+                                // the feed happened to deliver. Gating this on "is the full article
+                                // already shown" was wrong: a feed that serves full text
+                                // server-side (FreshRSS) renders as a description, so the gesture
+                                // never fired for exactly the articles worth re-fetching.
                                 val state =
                                     rememberPullToLoadState(
                                         key = content,
@@ -187,15 +185,8 @@ fun ReadingPage(
                                                     onLoadArticle(id, index)
                                                 }
                                             } else null,
-                                        onLoadPrevious =
-                                            if (isShowingFullContent) {
-                                                { viewModel.refreshFullContent() }
-                                            } else if (isPreviousArticleAvailable) {
-                                                {
-                                                    val (id, index) = readerState.previousArticle
-                                                    onLoadArticle(id, index)
-                                                }
-                                            } else null,
+                                        onLoadPrevious = null,
+                                        onRefresh = { viewModel.refreshFullContent() },
                                     )
 
                                 val listState =
@@ -258,9 +249,7 @@ fun ReadingPage(
                                                     },
                                                     // Pull-to-refresh has to work even for someone
                                                     // who turned article switching off.
-                                                    enabled =
-                                                        isPullToSwitchArticleEnabled ||
-                                                            isShowingFullContent,
+                                                    enabled = true,
                                                 ),
                                             contentPadding = paddings,
                                             content = content.text ?: "",
@@ -279,8 +268,9 @@ fun ReadingPage(
                                         )
                                         PullToLoadIndicator(
                                             state = state,
-                                            canLoadPrevious = isPreviousArticleAvailable,
+                                            canLoadPrevious = false,
                                             canLoadNext = isNextArticleAvailable,
+                                            canRefresh = true,
                                         )
                                     }
                                 }

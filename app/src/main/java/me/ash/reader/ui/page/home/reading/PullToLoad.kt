@@ -114,6 +114,7 @@ fun rememberPullToLoadState(
     key: Any?,
     onLoadPrevious: (() -> Unit)?,
     onLoadNext: (() -> Unit)?,
+    onRefresh: (() -> Unit)? = null,
     loadThreshold: Dp = PullToLoadDefaults.loadThreshold(),
     snapAnimationSpec: AnimationSpec<Float> = spring(
         dampingRatio = Spring.DampingRatioLowBouncy,
@@ -125,6 +126,7 @@ fun rememberPullToLoadState(
     val scope = rememberCoroutineScope()
     val onNext = rememberUpdatedState(onLoadNext)
     val onPrevious = rememberUpdatedState(onLoadPrevious)
+    val refresh = rememberUpdatedState(onRefresh)
     val thresholdPx: Float
 
     with(LocalDensity.current) {
@@ -136,6 +138,7 @@ fun rememberPullToLoadState(
             animationScope = scope,
             onLoadPrevious = onPrevious,
             onLoadNext = onNext,
+            onRefresh = refresh,
             snapAnimationSpec = snapAnimationSpec,
             threshold = thresholdPx,
         )
@@ -163,6 +166,7 @@ class PullToLoadState internal constructor(
     private val animationScope: CoroutineScope,
     private val onLoadPrevious: State<(() -> Unit)?>,
     private val onLoadNext: State<(() -> Unit)?>,
+    private val onRefresh: State<(() -> Unit)?> = mutableStateOf(null),
     private val snapAnimationSpec: AnimationSpec<Float>,
     threshold: Float
 ) {
@@ -240,8 +244,16 @@ class PullToLoadState internal constructor(
 
         when (status) {
             Status.PulledDown -> {
-                onLoadPrevious.value?.let { it() } ?: animateDistanceTo(0f)
-
+                val refresh = onRefresh.value
+                if (refresh != null) {
+                    refresh()
+                    // Loading another article rebuilds this state, which resets the offset for
+                    // free. A refresh stays on the same article, so the indicator has to be sent
+                    // back explicitly or it stays stuck at the threshold.
+                    animateDistanceTo(0f)
+                } else {
+                    onLoadPrevious.value?.let { it() } ?: animateDistanceTo(0f)
+                }
             }
 
             Status.PulledUp -> {
