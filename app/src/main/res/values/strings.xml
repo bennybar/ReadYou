@@ -18,6 +18,8 @@
     </plurals>
     <string name="read_later">Read later</string>
     <string name="last_synced">Last synced %1$s</string>
+    <string name="remove_read_immediately">Remove read articles immediately</string>
+    <string name="remove_read_immediately_desc">Drop articles from the Unread list as soon as they are read, instead of leaving them greyed out</string>
     <string name="never_synced">Never synced</string>
     <plurals name="read_later_desc">
         <item quantity="one">%1$d item to read later</item>

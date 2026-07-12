@@ -30,6 +30,7 @@ import me.ash.reader.infrastructure.preference.LocalFullContentAllFeeds
 import me.ash.reader.infrastructure.preference.LocalHideEmptyGroups
 import me.ash.reader.infrastructure.preference.LocalImageCacheSize
 import me.ash.reader.infrastructure.preference.LocalPrefetchScope
+import me.ash.reader.infrastructure.preference.LocalRemoveReadImmediately
 import me.ash.reader.infrastructure.preference.PrefetchScopePreference
 import me.ash.reader.infrastructure.preference.LocalInitialFilter
 import me.ash.reader.infrastructure.preference.LocalInitialPage
@@ -76,6 +77,7 @@ fun InteractionPage(
     val fullContentAllFeeds = LocalFullContentAllFeeds.current
     val prefetchImages = LocalPrefetchImages.current
     val prefetchScope = LocalPrefetchScope.current
+    val removeReadImmediately = LocalRemoveReadImmediately.current
     val imageCacheSize = LocalImageCacheSize.current
     val sortUnreadArticles = LocalSortUnreadArticles.current
     val pullToSwitchArticle = LocalPullToSwitchArticle.current
@@ -182,6 +184,15 @@ fun InteractionPage(
                     ) {
                     }
 
+                    SettingItem(
+                        title = stringResource(R.string.remove_read_immediately),
+                        desc = stringResource(R.string.remove_read_immediately_desc),
+                        onClick = { removeReadImmediately.toggle(context, scope) },
+                    ) {
+                        RYSwitch(activated = removeReadImmediately.value) {
+                            removeReadImmediately.toggle(context, scope)
+                        }
+                    }
                     SettingItem(
                         title = stringResource(R.string.mark_as_read_on_scroll),
                         onClick = {

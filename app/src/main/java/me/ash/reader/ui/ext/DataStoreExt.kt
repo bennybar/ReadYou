@@ -195,6 +195,7 @@ sealed interface PreferencesKey {
         const val fullContentAllFeeds = "fullContentAllFeeds"
         const val prefetchImages = "prefetchImages"
         const val prefetchScope = "prefetchScope"
+        const val removeReadImmediately = "removeReadImmediately"
         const val imageCacheSize = "imageCacheSize"
         const val pullToLoadNextFeed = "pullToLoadNextFeed"
         const val pullToSwitchArticle = "pullToSwitchArticle"
@@ -275,6 +276,7 @@ sealed interface PreferencesKey {
                 BooleanKey(fullContentAllFeeds),
                 BooleanKey(prefetchImages),
                 IntKey(prefetchScope),
+                BooleanKey(removeReadImmediately),
                 IntKey(imageCacheSize),
                 BooleanKey(pullToLoadNextFeed),
                 BooleanKey(pullToSwitchArticle),
@@ -365,6 +367,7 @@ data class DataStoreKey<T>(val key: Preferences.Key<T>, val type: Class<T>) {
         const val fullContentAllFeeds = "fullContentAllFeeds"
         const val prefetchImages = "prefetchImages"
         const val prefetchScope = "prefetchScope"
+        const val removeReadImmediately = "removeReadImmediately"
         const val imageCacheSize = "imageCacheSize"
         const val pullToLoadNextFeed = "pullToLoadNextFeed"
         const val pullToSwitchArticle = "pullToSwitchArticle"
@@ -518,6 +521,8 @@ data class DataStoreKey<T>(val key: Preferences.Key<T>, val type: Class<T>) {
                     DataStoreKey(booleanPreferencesKey(prefetchImages), Boolean::class.java),
                 prefetchScope to
                     DataStoreKey(intPreferencesKey(prefetchScope), Int::class.java),
+                removeReadImmediately to
+                    DataStoreKey(booleanPreferencesKey(removeReadImmediately), Boolean::class.java),
                 imageCacheSize to
                     DataStoreKey(intPreferencesKey(imageCacheSize), Int::class.java),
                 pullToLoadNextFeed to

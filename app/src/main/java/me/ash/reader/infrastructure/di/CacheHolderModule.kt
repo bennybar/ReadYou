@@ -27,9 +27,15 @@ object CacheHolderModule {
         @IODispatcher ioDispatcher: CoroutineDispatcher,
         accountService: AccountService,
         rssService: RssService,
+        settingsProvider: SettingsProvider,
     ): DiffMapHolder {
         return DiffMapHolder(
-            context = context, applicationScope, ioDispatcher, accountService, rssService
+            context = context,
+            applicationScope,
+            ioDispatcher,
+            accountService,
+            rssService,
+            settingsProvider,
         )
     }
 

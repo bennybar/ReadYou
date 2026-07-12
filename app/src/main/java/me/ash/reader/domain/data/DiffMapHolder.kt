@@ -27,6 +27,7 @@ import me.ash.reader.domain.service.AccountService
 import me.ash.reader.domain.service.RssService
 import me.ash.reader.infrastructure.di.ApplicationScope
 import me.ash.reader.infrastructure.di.IODispatcher
+import me.ash.reader.infrastructure.preference.SettingsProvider
 import java.io.File
 import javax.inject.Inject
 
@@ -39,6 +40,7 @@ class DiffMapHolder @Inject constructor(
     @IODispatcher private val ioDispatcher: CoroutineDispatcher,
     private val accountService: AccountService,
     private val rssService: RssService,
+    private val settingsProvider: SettingsProvider,
 ) {
     val diffMap = mutableStateMapOf<String, Diff>()
 
@@ -66,6 +68,20 @@ class DiffMapHolder @Inject constructor(
 
     var dbJob: Job? = null
     var remoteJob: Job? = null
+
+    /** The article currently open in the reader, if any. Never committed while it is open. */
+    var openArticleId: String? = null
+
+    private val removeReadImmediately
+        get() = settingsProvider.settings.removeReadImmediately.value
+
+    /** Called when the reader closes, so the article just read can drop out of the list. */
+    fun onReaderClosed() {
+        openArticleId = null
+        if (removeReadImmediately) {
+            commitDiffsToDb()
+        }
+    }
 
     init {
         applicationScope.launch {
@@ -188,6 +204,9 @@ class DiffMapHolder @Inject constructor(
                 appendDiffToSync(it)
             }
         }
+        if (removeReadImmediately) {
+            commitDiffsToDb()
+        }
     }
 
     private fun appendDiffToSync(diff: Diff) {
@@ -199,9 +218,15 @@ class DiffMapHolder @Inject constructor(
 
     fun commitDiffsToDb() {
         applicationScope.launch(ioDispatcher) {
-            val markAsReadArticles = diffMap.filter { !it.value.isUnread }.map { it.key }.toSet()
-            val markAsUnreadArticles = diffMap.filter { it.value.isUnread }.map { it.key }.toSet()
-            clearDiffs()
+            // The article open in the reader has to stay in the list. The reader finds the next and
+            // previous article by looking the current one up by index in the paging snapshot, so
+            // committing it would drop it out of an Unread-filtered list and leave the reader
+            // unable to navigate. It gets committed once the reader closes.
+            val openId = openArticleId
+            val committable = diffMap.filterKeys { it != openId }
+            val markAsReadArticles = committable.filter { !it.value.isUnread }.keys.toSet()
+            val markAsUnreadArticles = committable.filter { it.value.isUnread }.keys.toSet()
+            clearDiffs(except = openId)
             rssService.get().batchMarkAsRead(articleIds = markAsReadArticles, isUnread = false)
             rssService.get().batchMarkAsRead(articleIds = markAsUnreadArticles, isUnread = true)
         }
@@ -272,12 +297,16 @@ class DiffMapHolder @Inject constructor(
         }
     }
 
-    private fun clearDiffs() {
+    private fun clearDiffs(except: String? = null) {
         applicationScope.launch(ioDispatcher) {
             if (cacheFile.exists() && cacheFile.canWrite()) {
                 cacheFile.delete()
             }
+            val kept = except?.let { diffMap[it] }
             diffMap.clear()
+            if (except != null && kept != null) {
+                diffMap[except] = kept
+            }
         }
     }
 }

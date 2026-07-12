@@ -84,6 +84,7 @@ fun Preferences.toSettings(): Settings {
         fullContentAllFeeds = FullContentAllFeedsPreference.fromPreferences(this),
         prefetchImages = PrefetchImagesPreference.fromPreferences(this),
         prefetchScope = PrefetchScopePreference.fromPreferences(this),
+        removeReadImmediately = RemoveReadImmediatelyPreference.fromPreferences(this),
         imageCacheSize = ImageCacheSizePreference.fromPreferences(this),
         pullToSwitchFeed = PullToLoadNextFeedPreference.fromPreference(this),
         pullToSwitchArticle = PullToSwitchArticlePreference.fromPreference(this),

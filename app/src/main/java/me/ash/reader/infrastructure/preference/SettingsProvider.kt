@@ -136,6 +136,7 @@ class SettingsProvider @Inject constructor(
             LocalFullContentAllFeeds provides settings.fullContentAllFeeds,
             LocalPrefetchImages provides settings.prefetchImages,
             LocalPrefetchScope provides settings.prefetchScope,
+            LocalRemoveReadImmediately provides settings.removeReadImmediately,
             LocalImageCacheSize provides settings.imageCacheSize,
             LocalPullToSwitchArticle provides settings.pullToSwitchArticle,
             LocalOpenLink provides settings.openLink,

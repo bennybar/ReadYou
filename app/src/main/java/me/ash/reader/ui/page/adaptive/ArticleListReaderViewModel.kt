@@ -293,6 +293,9 @@ constructor(
                     ?: (itemFromList?.articleWithFeed
                         ?: rssService.get().findArticleById(articleId)!!)
 
+            // Register before marking it read: with "remove read immediately" on, the commit that
+            // follows must not drop the article we are about to display out of the list.
+            diffMapHolder.openArticleId = item.article.id
             if (diffMapHolder.checkIfUnread(item)) {
                 diffMapHolder.updateDiff(item, isUnread = false)
             }
@@ -322,6 +325,7 @@ constructor(
     }
 
     fun clearReadingData() {
+        diffMapHolder.onReaderClosed()
         _readingUiState.update { ReadingUiState() }
         _readerState.update { ReaderState() }
     }
