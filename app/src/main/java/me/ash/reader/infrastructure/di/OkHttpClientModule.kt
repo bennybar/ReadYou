@@ -165,8 +165,15 @@ fun OkHttpClient.Builder.setupSsl(
 object UserAgentInterceptor : Interceptor {
 
     override fun intercept(chain: Interceptor.Chain): Response {
+        val request = chain.request()
+        // Don't clobber a User-Agent the caller set on purpose. Scraping an article page sends a
+        // browser User-Agent instead of ours, because bot managers redirect an unknown app agent
+        // to a challenge page, which we would then cache as if it were the article.
+        if (request.header("User-Agent") != null) {
+            return chain.proceed(request)
+        }
         return chain.proceed(
-            chain.request()
+            request
                 .newBuilder()
                 .header("User-Agent", USER_AGENT_STRING)
                 .build()
@@ -175,3 +182,15 @@ object UserAgentInterceptor : Interceptor {
 }
 
 const val USER_AGENT_STRING = BuildConfig.USER_AGENT_STRING
+
+/**
+ * Sent when fetching an article's own web page for full-text extraction.
+ *
+ * Announcing ourselves as "ReadYouReloaded/x.y.z" gets the request bounced to a bot-manager
+ * challenge (Radware's validate.perfdrive.com, for instance, echoes the agent straight back in its
+ * query string). The challenge page is a perfectly valid 200 with real text, so it used to end up
+ * cached and displayed in place of the article.
+ */
+const val BROWSER_USER_AGENT_STRING =
+    "Mozilla/5.0 (Linux; Android 14; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) " +
+        "Chrome/126.0.0.0 Mobile Safari/537.36"

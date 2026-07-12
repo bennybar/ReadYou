@@ -20,6 +20,8 @@ import kotlinx.coroutines.withContext
 import me.ash.reader.domain.model.article.Article
 import me.ash.reader.domain.model.feed.Feed
 import me.ash.reader.domain.repository.FeedDao
+import java.util.Locale
+import me.ash.reader.infrastructure.di.BROWSER_USER_AGENT_STRING
 import me.ash.reader.infrastructure.di.IODispatcher
 import me.ash.reader.infrastructure.html.Readability
 import me.ash.reader.ui.ext.currentAccountId
@@ -31,6 +33,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.executeAsync
 import okhttp3.internal.commonIsSuccessful
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okio.IOException
 import org.jsoup.Jsoup
 
@@ -115,7 +118,18 @@ constructor(
     @Throws(Exception::class)
     suspend fun parseFullContent(link: String, title: String): String {
         return withContext(ioDispatcher) {
-            val response = response(okHttpClient, link)
+            val response = articlePageResponse(okHttpClient, link)
+
+            // A bot manager answers with a normal 200 page full of real text, so nothing downstream
+            // can tell it apart from the article. Catch it here, by the redirect off the article's
+            // own host, and fail instead of caching the challenge page as the article.
+            val requestedHost = link.toHttpUrlOrNull()?.host
+            val finalHost = response.request.url.host
+            if (requestedHost != null && !finalHost.isSameSiteAs(requestedHost)) {
+                response.close()
+                throw IOException("$link redirected off-site to $finalHost (bot challenge?)")
+            }
+
             if (response.commonIsSuccessful) {
                 val responseBody = response.body
                 val charset = responseBody.contentType()?.charset()
@@ -297,4 +311,37 @@ constructor(
 
     private suspend fun response(client: OkHttpClient, url: String): okhttp3.Response =
         client.newCall(Request.Builder().url(url).build()).executeAsync()
+
+    /** Fetches an article's own page looking like a browser rather than like a feed reader. */
+    private suspend fun articlePageResponse(
+        client: OkHttpClient,
+        url: String,
+    ): okhttp3.Response =
+        client
+            .newCall(
+                Request.Builder()
+                    .url(url)
+                    .header("User-Agent", BROWSER_USER_AGENT_STRING)
+                    .header(
+                        "Accept",
+                        "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                    )
+                    .header(
+                        "Accept-Language",
+                        "${Locale.getDefault().toLanguageTag()},en;q=0.8",
+                    )
+                    .build()
+            )
+            .executeAsync()
+}
+
+/**
+ * Whether two hosts belong to the same site, tolerating the usual `www.`/`m.`/`amp.` variants so a
+ * legitimate redirect is not mistaken for a bot challenge.
+ */
+private fun String.isSameSiteAs(other: String): Boolean {
+    fun String.normalize() = removePrefix("www.").removePrefix("m.").removePrefix("amp.")
+    val a = normalize()
+    val b = other.normalize()
+    return a == b || a.endsWith(".$b") || b.endsWith(".$a")
 }
