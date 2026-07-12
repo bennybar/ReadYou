@@ -120,6 +120,16 @@ constructor(
         }
     }
 
+    /**
+     * Downloads the article from its source again, ignoring the cached copy. On failure the
+     * existing cache is left untouched, so a refresh that fails does not destroy the copy the
+     * reader is currently showing.
+     */
+    @CheckResult
+    suspend fun refetchFullContent(article: Article): Result<String> {
+        return withContext(ioDispatcher) { fetchFullContentInternal(article) }
+    }
+
     @CheckResult
     suspend fun readOrFetchFullContent(article: Article): Result<String> {
         return withContext(ioDispatcher) {

@@ -379,6 +379,39 @@ constructor(
         }
     }
 
+    /** Pull-to-refresh in the reader: re-download the article from its source, ignoring the cache. */
+    fun refreshFullContent() {
+        val article = currentArticle ?: return
+        val fetchJob =
+            viewModelScope.launch {
+                readerCacheHelper
+                    .refetchFullContent(article)
+                    .onSuccess { content ->
+                        _readerState.update {
+                            it.copy(content = ReaderState.FullContent(content = content))
+                        }
+                    }
+                    .onFailure { th ->
+                        // Keep showing what the reader already had rather than replacing a
+                        // readable article with an error because the refresh failed.
+                        val cached = readerCacheHelper.readFullContent(article.id).getOrNull()
+                        _readerState.update {
+                            it.copy(
+                                content =
+                                    if (cached != null) ReaderState.FullContent(content = cached)
+                                    else ReaderState.Error(th.message.toString())
+                            )
+                        }
+                    }
+            }
+        viewModelScope.launch {
+            delay(100L)
+            if (fetchJob.isActive) {
+                setLoading()
+            }
+        }
+    }
+
     fun updateReadStatus(isUnread: Boolean) {
         readingUiState.value.articleWithFeed?.let {
             diffMapHolder.updateDiff(it, isUnread = isUnread)

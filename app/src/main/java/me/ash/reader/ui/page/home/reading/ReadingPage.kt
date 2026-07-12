@@ -173,6 +173,10 @@ fun ReadingPage(
                     ) {
                         remember { it }
                             .run {
+                                // While the full article is shown, pulling down re-downloads it
+                                // from the source instead of going to the previous article.
+                                val isShowingFullContent = content is ReaderState.FullContent
+
                                 val state =
                                     rememberPullToLoadState(
                                         key = content,
@@ -184,7 +188,9 @@ fun ReadingPage(
                                                 }
                                             } else null,
                                         onLoadPrevious =
-                                            if (isPreviousArticleAvailable) {
+                                            if (isShowingFullContent) {
+                                                { viewModel.refreshFullContent() }
+                                            } else if (isPreviousArticleAvailable) {
                                                 {
                                                     val (id, index) = readerState.previousArticle
                                                     onLoadArticle(id, index)
@@ -250,7 +256,11 @@ fun ReadingPage(
                                                         if (abs(f) > 2f)
                                                             isReaderScrollingDown = f < 0f
                                                     },
-                                                    enabled = isPullToSwitchArticleEnabled,
+                                                    // Pull-to-refresh has to work even for someone
+                                                    // who turned article switching off.
+                                                    enabled =
+                                                        isPullToSwitchArticleEnabled ||
+                                                            isShowingFullContent,
                                                 ),
                                             contentPadding = paddings,
                                             content = content.text ?: "",
