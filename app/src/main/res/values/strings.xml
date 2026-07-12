@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="read_you" translatable="false">Read You</string>
+    <string name="read_you" translatable="false">ReadYou Reloaded</string>
     <string name="all">All</string>
     <plurals name="all_desc">
         <item quantity="one">%1$d archived item</item>
@@ -15,6 +15,11 @@
     <plurals name="starred_desc">
         <item quantity="one">%1$d starred item</item>
         <item quantity="other">%1$d starred items</item>
+    </plurals>
+    <string name="read_later">Read later</string>
+    <plurals name="read_later_desc">
+        <item quantity="one">%1$d item to read later</item>
+        <item quantity="other">%1$d items to read later</item>
     </plurals>
     <string name="feeds">Feeds</string>
     <string name="syncing">Syncing…</string>
@@ -384,6 +389,19 @@
     <string name="notifications_desc">Get notifications when new unread articles are available</string>
     <string name="open_in_browser_desc">Open articles in the browser</string>
     <string name="parse_full_content_desc">Fetch full articles from webpages</string>
+    <string name="full_content_all_feeds">Full content for all feeds</string>
+    <string name="full_content_all_feeds_desc">Fetch full articles for every feed, without enabling "Parse full content" on each one</string>
+    <string name="prefetch_images">Prefetch images</string>
+    <string name="prefetch_images_desc">Download article images while syncing, so articles can be read offline</string>
+    <string name="prefetch_scope">What to keep offline</string>
+    <string name="prefetch_scope_unread">Unread articles</string>
+    <string name="prefetch_scope_unread_starred">Unread and starred articles</string>
+    <string name="prefetch_scope_all">All articles</string>
+    <string name="image_cache_size">Image cache size</string>
+    <string name="download_now">Download now</string>
+    <string name="download_now_desc">Fetch offline copies right away, and retry articles that failed before</string>
+    <string name="download_progress">Downloading %1$d of %2$d…</string>
+    <string name="image_cache_size_percent">%1$d%% of free storage</string>
     <string name="enable">Enable</string>
     <string name="disable">Disable</string>
 </resources>

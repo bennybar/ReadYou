@@ -15,6 +15,10 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
+import me.ash.reader.infrastructure.preference.ImageCacheSizePreference
+import me.ash.reader.ui.ext.dataStore
 import okhttp3.OkHttpClient
 import javax.inject.Singleton
 
@@ -52,7 +56,7 @@ object ImageLoaderModule {
             .diskCache(
                 DiskCache.Builder()
                     .directory(context.cacheDir.resolve("images"))
-                    .maxSizePercent(0.02)
+                    .maxSizePercent(imageCacheSizePercent(context))
                     .build()
             )
             // Enable memory cache
@@ -62,5 +66,12 @@ object ImageLoaderModule {
                     .build()
             )
             .build()
+    }
+
+    // The ImageLoader is a singleton built before any Composable runs, so the preference has to be
+    // read straight from DataStore rather than through a CompositionLocal. Changing it takes effect
+    // on the next app start.
+    private fun imageCacheSizePercent(context: Context): Double = runBlocking {
+        ImageCacheSizePreference.fromPreferences(context.dataStore.data.first()).value / 100.0
     }
 }

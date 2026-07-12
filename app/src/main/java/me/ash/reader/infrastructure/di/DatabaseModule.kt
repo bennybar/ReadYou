@@ -8,6 +8,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import me.ash.reader.domain.repository.AccountDao
 import me.ash.reader.domain.repository.ArticleDao
+import me.ash.reader.domain.repository.ArticleFtsDao
 import me.ash.reader.domain.repository.FeedDao
 import me.ash.reader.domain.repository.GroupDao
 import me.ash.reader.infrastructure.db.AndroidDatabase
@@ -29,6 +30,11 @@ object DatabaseModule {
     @Singleton
     fun provideArticleDao(androidDatabase: AndroidDatabase): ArticleDao =
         androidDatabase.articleDao()
+
+    @Provides
+    @Singleton
+    fun provideArticleFtsDao(androidDatabase: AndroidDatabase): ArticleFtsDao =
+        androidDatabase.articleFtsDao()
 
     @Provides
     @Singleton

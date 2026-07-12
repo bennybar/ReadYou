@@ -192,6 +192,10 @@ sealed interface PreferencesKey {
         const val swipeEndAction = "swipeEndAction"
         const val markAsReadOnScroll = "markAsReadOnScroll"
         const val hideEmptyGroups = "hideEmptyGroups"
+        const val fullContentAllFeeds = "fullContentAllFeeds"
+        const val prefetchImages = "prefetchImages"
+        const val prefetchScope = "prefetchScope"
+        const val imageCacheSize = "imageCacheSize"
         const val pullToLoadNextFeed = "pullToLoadNextFeed"
         const val pullToSwitchArticle = "pullToSwitchArticle"
         const val openLink = "openLink"
@@ -268,6 +272,10 @@ sealed interface PreferencesKey {
                 IntKey(swipeEndAction),
                 BooleanKey(markAsReadOnScroll),
                 BooleanKey(hideEmptyGroups),
+                BooleanKey(fullContentAllFeeds),
+                BooleanKey(prefetchImages),
+                IntKey(prefetchScope),
+                IntKey(imageCacheSize),
                 BooleanKey(pullToLoadNextFeed),
                 BooleanKey(pullToSwitchArticle),
                 IntKey(openLink),
@@ -354,6 +362,10 @@ data class DataStoreKey<T>(val key: Preferences.Key<T>, val type: Class<T>) {
         const val swipeEndAction = "swipeEndAction"
         const val markAsReadOnScroll = "markAsReadOnScroll"
         const val hideEmptyGroups = "hideEmptyGroups"
+        const val fullContentAllFeeds = "fullContentAllFeeds"
+        const val prefetchImages = "prefetchImages"
+        const val prefetchScope = "prefetchScope"
+        const val imageCacheSize = "imageCacheSize"
         const val pullToLoadNextFeed = "pullToLoadNextFeed"
         const val pullToSwitchArticle = "pullToSwitchArticle"
         const val openLink = "openLink"
@@ -500,6 +512,14 @@ data class DataStoreKey<T>(val key: Preferences.Key<T>, val type: Class<T>) {
                     DataStoreKey(booleanPreferencesKey(markAsReadOnScroll), Boolean::class.java),
                 hideEmptyGroups to
                     DataStoreKey(booleanPreferencesKey(hideEmptyGroups), Boolean::class.java),
+                fullContentAllFeeds to
+                    DataStoreKey(booleanPreferencesKey(fullContentAllFeeds), Boolean::class.java),
+                prefetchImages to
+                    DataStoreKey(booleanPreferencesKey(prefetchImages), Boolean::class.java),
+                prefetchScope to
+                    DataStoreKey(intPreferencesKey(prefetchScope), Int::class.java),
+                imageCacheSize to
+                    DataStoreKey(intPreferencesKey(imageCacheSize), Int::class.java),
                 pullToLoadNextFeed to
                     DataStoreKey(booleanPreferencesKey(pullToLoadNextFeed), Boolean::class.java),
                 pullToSwitchArticle to

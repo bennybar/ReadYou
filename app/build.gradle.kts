@@ -15,11 +15,15 @@ plugins {
 }
 
 fun fetchGitCommitHash(): String {
-    val process =
-        ProcessBuilder("git", "rev-parse", "--verify", "--short", "HEAD")
-            .redirectErrorStream(true)
-            .start()
-    return process.inputStream.bufferedReader().use { it.readText().trim() }
+    // stderr must not be folded into stdout: when git fails (no commits, bad config) its error
+    // text would otherwise be used as the "hash" and end up in the APK file name.
+    return runCatching {
+            val process =
+                ProcessBuilder("git", "rev-parse", "--verify", "--short", "HEAD").start()
+            val output = process.inputStream.bufferedReader().use { it.readText().trim() }
+            if (process.waitFor() == 0 && output.isNotEmpty()) output else "nogit"
+        }
+        .getOrDefault("nogit")
 }
 
 val gitCommitHash = fetchGitCommitHash()
@@ -39,7 +43,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "me.ash.reader"
+        applicationId = "com.bennybar.readyoureloaded"
         minSdk = 26
         targetSdk = 34
         versionCode = 47
@@ -48,7 +52,7 @@ android {
         buildConfigField(
             "String",
             "USER_AGENT_STRING",
-            "\"ReadYou/${versionName}(${versionCode})\"",
+            "\"ReadYouReloaded/${versionName}(${versionCode})\"",
         )
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -95,7 +99,7 @@ android {
     applicationVariants.all {
         outputs.all {
             (this as com.android.build.gradle.internal.api.BaseVariantOutputImpl).outputFileName =
-                "ReadYou-${defaultConfig.versionName}-${gitCommitHash}.apk"
+                "ReadYouReloaded-${defaultConfig.versionName}-${gitCommitHash}.apk"
         }
     }
     kotlinOptions {

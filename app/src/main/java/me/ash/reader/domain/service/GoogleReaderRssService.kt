@@ -509,6 +509,9 @@ constructor(
                 .filter { it.id !in remoteFeeds.await().map { feed -> feed.id } }
                 .forEach { super.deleteFeed(it, true) }
 
+            // 9. Reconcile the Read Later label with the local flags
+            syncReadLater(accountId, googleReaderAPI)
+
             accountService.update(account.copy(updateAt = Date()))
             ListenableWorker.Result.success()
         } catch (e: Exception) {
@@ -863,5 +866,35 @@ constructor(
                 mark = if (isStarred) GoogleReaderAPI.Stream.Starred.tag else null,
                 unmark = if (!isStarred) GoogleReaderAPI.Stream.Starred.tag else null,
             )
+    }
+
+    override suspend fun markAsReadLater(articleId: String, isReadLater: Boolean) {
+        super.markAsReadLater(articleId, isReadLater)
+        getGoogleReaderAPI()
+            .editTag(
+                itemIds = listOf(articleId.dollarLast()),
+                mark = if (isReadLater) GoogleReaderAPI.Stream.ReadLater.tag else null,
+                unmark = if (!isReadLater) GoogleReaderAPI.Stream.ReadLater.tag else null,
+            )
+    }
+
+    /** Pulls the Read Later label back down so the list follows the user across devices. */
+    private suspend fun syncReadLater(accountId: Int, googleReaderAPI: GoogleReaderAPI) {
+        val remoteIds =
+            googleReaderAPI
+                .getReadLaterItemIds()
+                ?.itemRefs
+                ?.mapNotNull { it.id }
+                ?.map { accountId.spacerDollar(it) }
+                ?.toSet() ?: return
+
+        val localIds = articleDao.queryReadLaterArticleIds(accountId).toSet()
+
+        (remoteIds - localIds)
+            .takeIf { it.isNotEmpty() }
+            ?.let { articleDao.markAsReadLaterByIdSet(accountId, it, true) }
+        (localIds - remoteIds)
+            .takeIf { it.isNotEmpty() }
+            ?.let { articleDao.markAsReadLaterByIdSet(accountId, it, false) }
     }
 }

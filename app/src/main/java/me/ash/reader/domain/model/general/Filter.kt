@@ -3,6 +3,8 @@ package me.ash.reader.domain.model.general
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Subject
 import androidx.compose.material.icons.outlined.FiberManualRecord
+import androidx.compose.material.icons.rounded.Bookmark
+import androidx.compose.material.icons.rounded.BookmarkBorder
 import androidx.compose.material.icons.rounded.FiberManualRecord
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.StarOutline
@@ -32,6 +34,7 @@ class Filter private constructor(
 ) {
 
     fun isStarred(): Boolean = this == Starred
+    fun isReadLater(): Boolean = this == ReadLater
     fun isUnread(): Boolean = this == Unread
     fun isAll(): Boolean = this == All
 
@@ -40,6 +43,7 @@ class Filter private constructor(
     fun toName(): String = when (this) {
         Unread -> stringResource(R.string.unread)
         Starred -> stringResource(R.string.starred)
+        ReadLater -> stringResource(R.string.read_later)
         else -> stringResource(R.string.all)
     }
 
@@ -48,6 +52,7 @@ class Filter private constructor(
     @Composable
     fun toDesc(important: Int): String = when (this) {
         Starred -> pluralStringResource(R.plurals.starred_desc, important, important)
+        ReadLater -> pluralStringResource(R.plurals.read_later_desc, important, important)
         Unread -> pluralStringResource(R.plurals.unread_desc, important, important)
         else -> pluralStringResource(R.plurals.all_desc, important, important)
     }
@@ -69,6 +74,11 @@ class Filter private constructor(
             iconOutline = Icons.AutoMirrored.Rounded.Subject,
             iconFilled = Icons.AutoMirrored.Rounded.Subject,
         )
-        val values = listOf(Starred, Unread, All)
+        val ReadLater = Filter(
+            index = 3,
+            iconOutline = Icons.Rounded.BookmarkBorder,
+            iconFilled = Icons.Rounded.Bookmark,
+        )
+        val values = listOf(Starred, ReadLater, Unread, All)
     }
 }

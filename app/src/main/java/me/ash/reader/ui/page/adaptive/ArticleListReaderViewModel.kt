@@ -298,7 +298,12 @@ constructor(
             }
             item.run {
                 _readingUiState.update {
-                    it.copy(articleWithFeed = this, isStarred = article.isStarred, isUnread = false)
+                    it.copy(
+                        articleWithFeed = this,
+                        isStarred = article.isStarred,
+                        isReadLater = article.isReadLater,
+                        isUnread = false,
+                    )
                 }
                 _readerState.update {
                     it.copy(
@@ -322,8 +327,10 @@ constructor(
     }
 
     suspend fun ReaderState.renderContent(articleWithFeed: ArticleWithFeed): ReaderState {
+        val isFullContent =
+            settingsProvider.settings.fullContentAllFeeds.value || articleWithFeed.feed.isFullContent
         val contentState =
-            if (articleWithFeed.feed.isFullContent) {
+            if (isFullContent) {
                 val fullContent =
                     readerCacheHelper.readFullContent(articleWithFeed.article.id).getOrNull()
                 if (fullContent != null) ReaderState.FullContent(fullContent)
@@ -382,6 +389,15 @@ constructor(
             _readingUiState.update { it.copy(isStarred = isStarred) }
             currentArticle?.let {
                 rssService.get().markAsStarred(articleId = it.id, isStarred = isStarred)
+            }
+        }
+    }
+
+    fun updateReadLaterStatus(isReadLater: Boolean) {
+        applicationScope.launch(ioDispatcher) {
+            _readingUiState.update { it.copy(isReadLater = isReadLater) }
+            currentArticle?.let {
+                rssService.get().markAsReadLater(articleId = it.id, isReadLater = isReadLater)
             }
         }
     }
@@ -452,6 +468,7 @@ data class ReadingUiState(
     val articleWithFeed: ArticleWithFeed? = null,
     val isUnread: Boolean = false,
     val isStarred: Boolean = false,
+    val isReadLater: Boolean = false,
 )
 
 data class ReaderState(

@@ -9,7 +9,10 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import coil.imageLoader
 import me.ash.reader.ui.ext.isUrl
+import okio.buffer
+import java.io.ByteArrayInputStream
 import java.io.DataInputStream
 import java.net.HttpURLConnection
 import java.net.URI
@@ -42,6 +45,10 @@ class WebViewClient(
                 Log.e("RLog", "WebView shouldInterceptRequest: $e")
             }
         } else if (url != null && url.isUrl()) {
+            // Images prefetched by ReaderWorker live in Coil's disk cache. The WebView renderer has
+            // its own network stack and would otherwise re-download them, so serve them from there:
+            // that is what makes a prefetched article readable offline.
+            cachedImageResponse(url)?.let { return it }
             try {
                 var connection = URI.create(url).toURL().openConnection() as HttpURLConnection
                 if (connection.responseCode == 403) {
@@ -56,6 +63,31 @@ class WebViewClient(
             }
         }
         return super.shouldInterceptRequest(view, request)
+    }
+
+    private fun cachedImageResponse(url: String): WebResourceResponse? {
+        return try {
+            val diskCache = context.imageLoader.diskCache ?: return null
+            diskCache.openSnapshot(url)?.use { snapshot ->
+                val bytes = diskCache.fileSystem.source(snapshot.data).buffer().readByteArray()
+                val mimeType = sniffImageMimeType(bytes) ?: return null
+                WebResourceResponse(mimeType, null, ByteArrayInputStream(bytes))
+            }
+        } catch (e: Exception) {
+            Log.e("RLog", "WebView cachedImageResponse: $e")
+            null
+        }
+    }
+
+    private fun sniffImageMimeType(bytes: ByteArray): String? {
+        fun byteAt(index: Int): Int = if (index < bytes.size) bytes[index].toInt() and 0xFF else -1
+        return when {
+            byteAt(0) == 0xFF && byteAt(1) == 0xD8 -> "image/jpeg"
+            byteAt(0) == 0x89 && byteAt(1) == 0x50 -> "image/png"
+            byteAt(0) == 0x47 && byteAt(1) == 0x49 && byteAt(2) == 0x46 -> "image/gif"
+            byteAt(0) == 0x52 && byteAt(8) == 0x57 && byteAt(9) == 0x45 -> "image/webp"
+            else -> null
+        }
     }
 
     override fun onPageFinished(view: WebView?, url: String?) {

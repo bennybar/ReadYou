@@ -88,6 +88,7 @@ constructor(
                                                 groupId = filterState.group?.id,
                                                 feedId = filterState.feed?.id,
                                                 isStarred = filterState.filter.isStarred(),
+                                                isReadLater = filterState.filter.isReadLater(),
                                                 isUnread = filterState.filter.isUnread(),
                                                 sortAscending =
                                                     settingsProvider.settings.flowSortUnreadArticles
@@ -100,6 +101,7 @@ constructor(
                                                 groupId = filterState.group?.id,
                                                 feedId = filterState.feed?.id,
                                                 isStarred = filterState.filter.isStarred(),
+                                                isReadLater = filterState.filter.isReadLater(),
                                                 isUnread = filterState.filter.isUnread(),
                                                 sortAscending =
                                                     settingsProvider.settings.flowSortUnreadArticles

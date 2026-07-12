@@ -7,6 +7,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import java.util.concurrent.TimeUnit
 import me.ash.reader.domain.model.account.Account
+import me.ash.reader.domain.repository.ArticleFtsDao
 import me.ash.reader.infrastructure.rss.ReaderCacheHelper
 
 @HiltWorker
@@ -17,6 +18,8 @@ constructor(
     @Assisted workerParams: WorkerParameters,
     private val rssService: RssService,
     private val readerCacheHelper: ReaderCacheHelper,
+    private val articleFtsDao: ArticleFtsDao,
+    private val accountService: AccountService,
     private val workManager: WorkManager,
 ) : CoroutineWorker(context, workerParams) {
 
@@ -27,12 +30,25 @@ constructor(
         val feedId = data.getString("feedId")
         val groupId = data.getString("groupId")
 
+        // Prefetching full content downloads whole webpages, so it has to honour the same
+        // network/charging limits the user set for syncing.
+        val account = accountService.getAccountById(accountId)
+        val readerConstraints =
+            Constraints.Builder()
+                .setRequiresCharging(account?.syncOnlyWhenCharging?.value ?: false)
+                .setRequiredNetworkType(
+                    if (account?.syncOnlyOnWiFi?.value == true) NetworkType.UNMETERED
+                    else NetworkType.CONNECTED
+                )
+                .build()
+
         return rssService
             .get()
             .sync(accountId = accountId, feedId = feedId, groupId = groupId)
             .also {
                 rssService.get().clearKeepArchivedArticles().forEach {
                     readerCacheHelper.deleteCacheFor(articleId = it.id)
+                    articleFtsDao.deleteByArticleId(articleId = it.id)
                 }
                 workManager
                     .beginUniqueWork(
@@ -41,6 +57,7 @@ constructor(
                         OneTimeWorkRequestBuilder<ReaderWorker>()
                             .addTag(READER_TAG)
                             .addTag(ONETIME_WORK_TAG)
+                            .setConstraints(readerConstraints)
                             .setBackoffCriteria(
                                 backoffPolicy = BackoffPolicy.EXPONENTIAL,
                                 backoffDelay = 30,

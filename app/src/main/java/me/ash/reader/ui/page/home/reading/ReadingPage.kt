@@ -283,6 +283,7 @@ fun ReadingPage(
                         isShow = isShowToolBar,
                         isUnread = readingUiState.isUnread,
                         isStarred = readingUiState.isStarred,
+                        isReadLater = readingUiState.isReadLater,
                         isNextArticleAvailable = isNextArticleAvailable,
                         isFullContent =
                             readerState.content is ReaderState.FullContent ||
@@ -290,6 +291,7 @@ fun ReadingPage(
                         isBoldCharacters = boldCharacters.value,
                         onUnread = { viewModel.updateReadStatus(it) },
                         onStarred = { viewModel.updateStarredStatus(it) },
+                        onReadLater = { viewModel.updateReadLaterStatus(it) },
                         onNextArticle = {
                             readerState.nextArticle?.let {
                                 val (id, index) = it

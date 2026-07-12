@@ -93,10 +93,8 @@ interface ArticleDao {
             SELECT id FROM feed WHERE groupId = :groupId
         )
         AND isUnread = :isUnread
-        AND (
-            title LIKE '%' || :text || '%'
-            OR shortDescription LIKE '%' || :text || '%'
-            OR fullContent LIKE '%' || :text || '%'
+        AND id IN (
+            SELECT articleId FROM article_fts WHERE article_fts MATCH :text
         )
         ORDER BY
             CASE WHEN :sortAscending = 1 THEN date END ASC,
@@ -120,10 +118,8 @@ interface ArticleDao {
             SELECT id FROM feed WHERE groupId = :groupId
         )
         AND isStarred = :isStarred
-        AND (
-            title LIKE '%' || :text || '%'
-            OR shortDescription LIKE '%' || :text || '%'
-            OR fullContent LIKE '%' || :text || '%'
+        AND id IN (
+            SELECT articleId FROM article_fts WHERE article_fts MATCH :text
         )
         ORDER BY
             CASE WHEN :sortAscending = 1 THEN date END ASC,
@@ -142,14 +138,37 @@ interface ArticleDao {
     @Query(
         """
         SELECT * FROM article
+        WHERE accountId = :accountId
+        AND feedId IN (
+            SELECT id FROM feed WHERE groupId = :groupId
+        )
+        AND isReadLater = :isReadLater
+        AND id IN (
+            SELECT articleId FROM article_fts WHERE article_fts MATCH :text
+        )
+        ORDER BY
+            CASE WHEN :sortAscending = 1 THEN date END ASC,
+            CASE WHEN :sortAscending = 0 THEN date END DESC
+        """
+    )
+    fun searchArticleByGroupIdWhenIsReadLater(
+        accountId: Int,
+        text: String,
+        groupId: String,
+        isReadLater: Boolean,
+        sortAscending: Boolean = false
+    ): PagingSource<Int, ArticleWithFeed>
+
+    @Transaction
+    @Query(
+        """
+        SELECT * FROM article
         WHERE accountId = :accountId 
         AND feedId IN (
             SELECT id FROM feed WHERE groupId = :groupId
         )
-        AND (
-            title LIKE '%' || :text || '%'
-            OR shortDescription LIKE '%' || :text || '%'
-            OR fullContent LIKE '%' || :text || '%'
+        AND id IN (
+            SELECT articleId FROM article_fts WHERE article_fts MATCH :text
         )
         ORDER BY
             CASE WHEN :sortAscending = 1 THEN date END ASC,
@@ -167,10 +186,8 @@ interface ArticleDao {
         WHERE accountId = :accountId 
         AND feedId = :feedId
         AND isUnread = :isUnread
-        AND (
-            title LIKE '%' || :text || '%'
-            OR shortDescription LIKE '%' || :text || '%'
-            OR fullContent LIKE '%' || :text || '%'
+        AND id IN (
+            SELECT articleId FROM article_fts WHERE article_fts MATCH :text
         )
         ORDER BY
             CASE WHEN :sortAscending = 1 THEN date END ASC,
@@ -192,10 +209,8 @@ interface ArticleDao {
         WHERE accountId = :accountId 
         AND feedId = :feedId
         AND isStarred = :isStarred
-        AND (
-            title LIKE '%' || :text || '%'
-            OR shortDescription LIKE '%' || :text || '%'
-            OR fullContent LIKE '%' || :text || '%'
+        AND id IN (
+            SELECT articleId FROM article_fts WHERE article_fts MATCH :text
         )
         ORDER BY
             CASE WHEN :sortAscending = 1 THEN date END ASC,
@@ -214,12 +229,33 @@ interface ArticleDao {
     @Query(
         """
         SELECT * FROM article
+        WHERE accountId = :accountId
+        AND feedId = :feedId
+        AND isReadLater = :isReadLater
+        AND id IN (
+            SELECT articleId FROM article_fts WHERE article_fts MATCH :text
+        )
+        ORDER BY
+            CASE WHEN :sortAscending = 1 THEN date END ASC,
+            CASE WHEN :sortAscending = 0 THEN date END DESC
+        """
+    )
+    fun searchArticleByFeedIdWhenIsReadLater(
+        accountId: Int,
+        text: String,
+        feedId: String,
+        isReadLater: Boolean,
+        sortAscending: Boolean = false
+    ): PagingSource<Int, ArticleWithFeed>
+
+    @Transaction
+    @Query(
+        """
+        SELECT * FROM article
         WHERE accountId = :accountId 
         AND feedId = :feedId 
-        AND (
-            title LIKE '%' || :text || '%'
-            OR shortDescription LIKE '%' || :text || '%'
-            OR fullContent LIKE '%' || :text || '%'
+        AND id IN (
+            SELECT articleId FROM article_fts WHERE article_fts MATCH :text
         )
         ORDER BY
             CASE WHEN :sortAscending = 1 THEN date END ASC,
@@ -236,10 +272,8 @@ interface ArticleDao {
         SELECT * FROM article
         WHERE accountId = :accountId 
         AND isUnread = :isUnread
-        AND (
-            title LIKE '%' || :text || '%'
-            OR shortDescription LIKE '%' || :text || '%'
-            OR fullContent LIKE '%' || :text || '%'
+        AND id IN (
+            SELECT articleId FROM article_fts WHERE article_fts MATCH :text
         )
         ORDER BY
             CASE WHEN :sortAscending = 1 THEN date END ASC,
@@ -256,10 +290,8 @@ interface ArticleDao {
         SELECT * FROM article
         WHERE accountId = :accountId 
         AND isStarred = :isStarred
-        AND (
-            title LIKE '%' || :text || '%'
-            OR shortDescription LIKE '%' || :text || '%'
-            OR fullContent LIKE '%' || :text || '%'
+        AND id IN (
+            SELECT articleId FROM article_fts WHERE article_fts MATCH :text
         )
         ORDER BY
             CASE WHEN :sortAscending = 1 THEN date END ASC,
@@ -274,11 +306,27 @@ interface ArticleDao {
     @Query(
         """
         SELECT * FROM article
+        WHERE accountId = :accountId
+        AND isReadLater = :isReadLater
+        AND id IN (
+            SELECT articleId FROM article_fts WHERE article_fts MATCH :text
+        )
+        ORDER BY
+            CASE WHEN :sortAscending = 1 THEN date END ASC,
+            CASE WHEN :sortAscending = 0 THEN date END DESC
+        """
+    )
+    fun searchArticleWhenIsReadLater(
+        accountId: Int, text: String, isReadLater: Boolean, sortAscending: Boolean = false
+    ): PagingSource<Int, ArticleWithFeed>
+
+    @Transaction
+    @Query(
+        """
+        SELECT * FROM article
         WHERE accountId = :accountId 
-        AND (
-            title LIKE '%' || :text || '%'
-            OR shortDescription LIKE '%' || :text || '%'
-            OR fullContent LIKE '%' || :text || '%'
+        AND id IN (
+            SELECT articleId FROM article_fts WHERE article_fts MATCH :text
         )
         ORDER BY
             CASE WHEN :sortAscending = 1 THEN date END ASC,
@@ -399,6 +447,41 @@ interface ArticleDao {
 
     @Query(
         """
+        UPDATE article SET isReadLater = :isReadLater
+        WHERE id = :articleId
+        AND accountId = :accountId
+        """
+    )
+    suspend fun markAsReadLaterByArticleId(
+        accountId: Int,
+        articleId: String,
+        isReadLater: Boolean,
+    )
+
+    @Query(
+        """
+        UPDATE article SET isReadLater = :isReadLater
+        WHERE id IN (:articleIds)
+        AND accountId = :accountId
+        """
+    )
+    suspend fun markAsReadLaterByIdSet(
+        accountId: Int,
+        articleIds: Set<String>,
+        isReadLater: Boolean,
+    )
+
+    @Query(
+        """
+        SELECT id FROM article
+        WHERE accountId = :accountId
+        AND isReadLater = 1
+        """
+    )
+    suspend fun queryReadLaterArticleIds(accountId: Int): List<String>
+
+    @Query(
+        """
         DELETE FROM article
         WHERE accountId = :accountId
         AND feedId = :feedId
@@ -506,6 +589,21 @@ interface ArticleDao {
     @Transaction
     @Query(
         """
+        SELECT * FROM article
+        WHERE isReadLater = :isReadLater
+        AND accountId = :accountId
+        ORDER BY
+            CASE WHEN :sortAscending = 1 THEN date END ASC,
+            CASE WHEN :sortAscending = 0 THEN date END DESC
+        """
+    )
+    fun queryArticleWithFeedWhenIsReadLater(
+        accountId: Int, isReadLater: Boolean, sortAscending: Boolean = false
+    ): PagingSource<Int, ArticleWithFeed>
+
+    @Transaction
+    @Query(
+        """
         SELECT * FROM article 
         WHERE isUnread = :isUnread 
         AND accountId = :accountId
@@ -565,6 +663,28 @@ interface ArticleDao {
     @RewriteQueriesToDropUnusedColumns
     @Query(
         """
+        SELECT a.id, a.date, a.title, a.author, a.rawDescription,
+        a.shortDescription, a.fullContent, a.img, a.link, a.feedId,
+        a.accountId, a.isUnread, a.isStarred, a.isReadLater, a.updateAt
+        FROM article AS a
+        LEFT JOIN feed AS b ON b.id = a.feedId
+        LEFT JOIN `group` AS c ON c.id = b.groupId
+        WHERE c.id = :groupId
+        AND a.isReadLater = :isReadLater
+        AND a.accountId = :accountId
+        ORDER BY
+            CASE WHEN :sortAscending = 1 THEN a.date END ASC,
+            CASE WHEN :sortAscending = 0 THEN a.date END DESC
+        """
+    )
+    fun queryArticleWithFeedByGroupIdWhenIsReadLater(
+        accountId: Int, groupId: String, isReadLater: Boolean, sortAscending: Boolean = false
+    ): PagingSource<Int, ArticleWithFeed>
+
+    @Transaction
+    @RewriteQueriesToDropUnusedColumns
+    @Query(
+        """
         SELECT a.id, a.date, a.title, a.author, a.rawDescription, 
         a.shortDescription, a.fullContent, a.img, a.link, a.feedId, 
         a.accountId, a.isUnread, a.isStarred, a.isReadLater, a.updateAt 
@@ -612,6 +732,22 @@ interface ArticleDao {
     )
     fun queryArticleWithFeedByFeedIdWhenIsStarred(
         accountId: Int, feedId: String, isStarred: Boolean, sortAscending: Boolean = false
+    ): PagingSource<Int, ArticleWithFeed>
+
+    @Transaction
+    @Query(
+        """
+        SELECT * from article
+        WHERE feedId = :feedId
+        AND isReadLater = :isReadLater
+        AND accountId = :accountId
+        ORDER BY
+            CASE WHEN :sortAscending = 1 THEN date END ASC,
+            CASE WHEN :sortAscending = 0 THEN date END DESC
+        """
+    )
+    fun queryArticleWithFeedByFeedIdWhenIsReadLater(
+        accountId: Int, feedId: String, isReadLater: Boolean, sortAscending: Boolean = false
     ): PagingSource<Int, ArticleWithFeed>
 
     @Transaction
@@ -667,12 +803,15 @@ interface ArticleDao {
         FROM article AS a
         LEFT JOIN feed AS f ON a.feedId = f.id
         WHERE f.accountId = :accountId
-        AND f.isFullContent = 1
-        AND a.isUnread = 1
+        AND (:allFeeds OR f.isFullContent = 1)
+        AND (:includeAll OR a.isUnread = 1 OR (:includeStarred AND a.isStarred = 1))
         """
     )
-    suspend fun queryUnreadFullContentArticles(
+    suspend fun queryPrefetchArticles(
         accountId: Int,
+        allFeeds: Boolean,
+        includeStarred: Boolean,
+        includeAll: Boolean,
     ): List<Article>
 
     @Transaction

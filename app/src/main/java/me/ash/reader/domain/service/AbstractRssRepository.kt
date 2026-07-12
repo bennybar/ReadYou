@@ -24,6 +24,7 @@ import me.ash.reader.domain.repository.FeedDao
 import me.ash.reader.domain.repository.GroupDao
 import me.ash.reader.infrastructure.android.NotificationHelper
 import me.ash.reader.infrastructure.preference.KeepArchivedPreference
+import me.ash.reader.infrastructure.preference.PrefetchScopePreference
 import me.ash.reader.infrastructure.preference.SyncIntervalPreference
 import me.ash.reader.infrastructure.rss.RssHelper
 import me.ash.reader.ui.ext.decodeHTML
@@ -149,6 +150,11 @@ abstract class AbstractRssRepository(
         articleDao.markAsStarredByArticleId(accountId, articleId, isStarred)
     }
 
+    open suspend fun markAsReadLater(articleId: String, isReadLater: Boolean) {
+        val accountId = accountService.getCurrentAccountId()
+        articleDao.markAsReadLaterByArticleId(accountId, articleId, isReadLater)
+    }
+
     suspend fun clearKeepArchivedArticles(): List<Article> {
         val accountId = accountService.getCurrentAccountId()
         val currentAccount = accountService.getCurrentAccount()
@@ -218,6 +224,7 @@ abstract class AbstractRssRepository(
         groupId: String?,
         feedId: String?,
         isStarred: Boolean,
+        isReadLater: Boolean,
         isUnread: Boolean,
         sortAscending: Boolean = false,
     ): PagingSource<Int, ArticleWithFeed> {
@@ -231,6 +238,13 @@ abstract class AbstractRssRepository(
                 when {
                     isStarred ->
                         articleDao.queryArticleWithFeedByGroupIdWhenIsStarred(
+                            accountId,
+                            groupId,
+                            true,
+                        )
+
+                    isReadLater ->
+                        articleDao.queryArticleWithFeedByGroupIdWhenIsReadLater(
                             accountId,
                             groupId,
                             true,
@@ -256,6 +270,13 @@ abstract class AbstractRssRepository(
                             true,
                         )
 
+                    isReadLater ->
+                        articleDao.queryArticleWithFeedByFeedIdWhenIsReadLater(
+                            accountId,
+                            feedId,
+                            true,
+                        )
+
                     isUnread ->
                         articleDao.queryArticleWithFeedByFeedIdWhenIsUnread(
                             accountId,
@@ -270,6 +291,9 @@ abstract class AbstractRssRepository(
             else ->
                 when {
                     isStarred -> articleDao.queryArticleWithFeedWhenIsStarred(accountId, true)
+                    isReadLater ->
+                        articleDao.queryArticleWithFeedWhenIsReadLater(accountId, true)
+
                     isUnread ->
                         articleDao.queryArticleWithFeedWhenIsUnread(
                             accountId,
@@ -415,6 +439,7 @@ abstract class AbstractRssRepository(
         groupId: String?,
         feedId: String?,
         isStarred: Boolean,
+        isReadLater: Boolean,
         isUnread: Boolean,
         sortAscending: Boolean = false,
     ): PagingSource<Int, ArticleWithFeed> {
@@ -423,13 +448,22 @@ abstract class AbstractRssRepository(
             "RLog",
             "searchArticles: content: ${content}, accountId: ${accountId}, groupId: ${groupId}, feedId: ${feedId}, isStarred: ${isStarred}, isUnread: ${isUnread}",
         )
+        val ftsQuery = toFtsMatchQuery(content)
         return when {
             groupId != null ->
                 when {
                     isStarred ->
                         articleDao.searchArticleByGroupIdWhenIsStarred(
                             accountId,
-                            content,
+                            ftsQuery,
+                            groupId,
+                            true,
+                        )
+
+                    isReadLater ->
+                        articleDao.searchArticleByGroupIdWhenIsReadLater(
+                            accountId,
+                            ftsQuery,
                             groupId,
                             true,
                         )
@@ -437,13 +471,13 @@ abstract class AbstractRssRepository(
                     isUnread ->
                         articleDao.searchArticleByGroupIdWhenIsUnread(
                             accountId,
-                            content,
+                            ftsQuery,
                             groupId,
                             true,
                             sortAscending,
                         )
 
-                    else -> articleDao.searchArticleByGroupIdWhenAll(accountId, content, groupId)
+                    else -> articleDao.searchArticleByGroupIdWhenAll(accountId, ftsQuery, groupId)
                 }
 
             feedId != null ->
@@ -451,7 +485,15 @@ abstract class AbstractRssRepository(
                     isStarred ->
                         articleDao.searchArticleByFeedIdWhenIsStarred(
                             accountId,
-                            content,
+                            ftsQuery,
+                            feedId,
+                            true,
+                        )
+
+                    isReadLater ->
+                        articleDao.searchArticleByFeedIdWhenIsReadLater(
+                            accountId,
+                            ftsQuery,
                             feedId,
                             true,
                         )
@@ -459,31 +501,61 @@ abstract class AbstractRssRepository(
                     isUnread ->
                         articleDao.searchArticleByFeedIdWhenIsUnread(
                             accountId,
-                            content,
+                            ftsQuery,
                             feedId,
                             true,
                             sortAscending,
                         )
 
-                    else -> articleDao.searchArticleByFeedIdWhenAll(accountId, content, feedId)
+                    else -> articleDao.searchArticleByFeedIdWhenAll(accountId, ftsQuery, feedId)
                 }
 
             else ->
                 when {
-                    isStarred -> articleDao.searchArticleWhenIsStarred(accountId, content, true)
+                    isStarred -> articleDao.searchArticleWhenIsStarred(accountId, ftsQuery, true)
+                    isReadLater ->
+                        articleDao.searchArticleWhenIsReadLater(accountId, ftsQuery, true)
+
                     isUnread ->
                         articleDao.searchArticleWhenIsUnread(
                             accountId,
-                            content,
+                            ftsQuery,
                             true,
                             sortAscending,
                         )
 
-                    else -> articleDao.searchArticleWhenAll(accountId, content)
+                    else -> articleDao.searchArticleWhenAll(accountId, ftsQuery)
                 }
         }
     }
 
-    suspend fun queryUnreadFullContentArticles() =
-        articleDao.queryUnreadFullContentArticles(accountService.getCurrentAccountId())
+    /**
+     * Turns raw user input into a safe FTS4 MATCH expression.
+     *
+     * Typed text goes straight into MATCH, and FTS treats characters like `"`, `*`, `:`, `-` and
+     * the words AND/OR/NOT as operators — so a search for `c++` or `foo:bar` would throw a
+     * malformed-MATCH exception instead of returning results. Keep only letters and digits, and
+     * make the final token a prefix so results narrow as the user types.
+     */
+    private fun toFtsMatchQuery(content: String): String {
+        val tokens = content.split(Regex("[^\\p{L}\\p{N}]+")).filter { it.isNotEmpty() }
+        // MATCH has no "match everything" expression, so fall back to something no article
+        // contains rather than letting SQLite reject an empty query.
+        if (tokens.isEmpty()) return NO_FTS_MATCH
+        return tokens.mapIndexed { i, t -> if (i == tokens.lastIndex) "$t*" else t }
+            .joinToString(" ")
+    }
+
+    suspend fun queryPrefetchArticles(allFeeds: Boolean, scope: PrefetchScopePreference) =
+        articleDao.queryPrefetchArticles(
+            accountId = accountService.getCurrentAccountId(),
+            allFeeds = allFeeds,
+            includeStarred = scope.includeStarred,
+            includeAll = scope.includeAll,
+        )
+
+    companion object {
+        // Only reached when the query is all punctuation ("!!!"); callers skip blank searches.
+        private const val NO_FTS_MATCH = "zzzznomatchzzzz4f2a1"
+    }
 }

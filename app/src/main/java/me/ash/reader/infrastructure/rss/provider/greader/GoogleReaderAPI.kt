@@ -55,6 +55,14 @@ private constructor(
         data class Feed(val feedId: String) : Stream("feed/$feedId")
 
         data class Category(val categoryId: String) : Stream("user/-/label/$categoryId")
+
+        /**
+         * Read Later has no dedicated Google Reader state, so it is stored as a label. FreshRSS
+         * reports labels with `"type": "tag"` and folders with `"type": "folder"`, and groups are
+         * built from feed categories rather than from the tag list, so this cannot show up as a
+         * bogus group.
+         */
+        data object ReadLater : Stream("user/-/label/Read Later")
     }
 
     private data class AuthData(val clientLoginToken: String?, val actionToken: String?)
@@ -381,6 +389,21 @@ private constructor(
                         add(Pair("s", Stream.Starred.tag))
                         limit?.let { add(Pair("n", limit)) }
                         since?.let { add(Pair("ot", since.toString())) }
+                        continuationId?.let { add(Pair("c", continuationId)) }
+                    },
+            )
+            .getOrNull()
+
+    suspend fun getReadLaterItemIds(
+        limit: String? = MAXIMUM_ITEMS_LIMIT,
+        continuationId: String? = null,
+    ): GoogleReaderDTO.ItemIds? =
+        retryableGetRequestWithResult<GoogleReaderDTO.ItemIds>(
+                query = "reader/api/0/stream/items/ids",
+                params =
+                    mutableListOf<Pair<String, String>>().apply {
+                        add(Pair("s", Stream.ReadLater.tag))
+                        limit?.let { add(Pair("n", limit)) }
                         continuationId?.let { add(Pair("c", continuationId)) }
                     },
             )

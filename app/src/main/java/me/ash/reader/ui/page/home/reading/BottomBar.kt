@@ -20,6 +20,8 @@ import androidx.compose.material.icons.automirrored.rounded.Article
 import androidx.compose.material.icons.filled.FiberManualRecord
 import androidx.compose.material.icons.outlined.FiberManualRecord
 import androidx.compose.material.icons.outlined.Headphones
+import androidx.compose.material.icons.rounded.Bookmark
+import androidx.compose.material.icons.rounded.BookmarkBorder
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.StarOutline
@@ -49,12 +51,14 @@ fun BottomBar(
     isShow: Boolean,
     isUnread: Boolean,
     isStarred: Boolean,
+    isReadLater: Boolean,
     isNextArticleAvailable: Boolean,
     isFullContent: Boolean,
     isBoldCharacters: Boolean,
     ttsButton: @Composable () -> Unit,
     onUnread: (isUnread: Boolean) -> Unit = {},
     onStarred: (isStarred: Boolean) -> Unit = {},
+    onReadLater: (isReadLater: Boolean) -> Unit = {},
     onNextArticle: () -> Unit = {},
     onFullContent: (isFullContent: Boolean) -> Unit = {},
     onBoldCharacters: () -> Unit = {},
@@ -130,6 +134,24 @@ fun BottomBar(
                         ) {
                             view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
                             onStarred(!isStarred)
+                        }
+                        CanBeDisabledIconButton(
+                            modifier = Modifier.size(40.dp),
+                            disabled = false,
+                            imageVector = if (isReadLater) {
+                                Icons.Rounded.Bookmark
+                            } else {
+                                Icons.Rounded.BookmarkBorder
+                            },
+                            contentDescription = stringResource(R.string.read_later),
+                            tint = if (isReadLater) {
+                                MaterialTheme.colorScheme.onSecondaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.outline
+                            },
+                        ) {
+                            view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                            onReadLater(!isReadLater)
                         }
                         CanBeDisabledIconButton(
                             disabled = !isNextArticleAvailable,
