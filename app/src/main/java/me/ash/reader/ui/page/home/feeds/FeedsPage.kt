@@ -72,6 +72,7 @@ import me.ash.reader.infrastructure.preference.LocalSkipVersionNumber
 import me.ash.reader.ui.component.FilterBar
 import me.ash.reader.ui.component.base.DisplayText
 import me.ash.reader.ui.component.base.FeedbackIconButton
+import me.ash.reader.ui.component.base.lastSyncedDescription
 import me.ash.reader.ui.component.base.RYScaffold
 import me.ash.reader.ui.component.scrollbar.drawVerticalScrollIndicator
 import me.ash.reader.ui.ext.collectAsStateValue
@@ -231,7 +232,10 @@ fun FeedsPage(
             PullToRefreshBox(state = syncingState, isRefreshing = isSyncing, onRefresh = doSync) {
                 LazyColumn(modifier = Modifier.fillMaxSize().drawVerticalScrollIndicator(listState), state = listState) {
                     item {
-                        DisplayText(text = feedsUiState.account?.name ?: "", desc = "") {
+                        DisplayText(
+                            text = feedsUiState.account?.name ?: "",
+                            desc = lastSyncedDescription(),
+                        ) {
                             hapticFeedback.performHapticFeedback(HapticFeedbackType.ContextClick)
                             accountTabVisible = true
                         }
@@ -373,3 +377,4 @@ fun FeedsPage(
         onDismissRequest = { accountTabVisible = false },
     )
 }
+

@@ -15,6 +15,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -91,6 +92,7 @@ import me.ash.reader.infrastructure.preference.PullToLoadNextFeedPreference
 import me.ash.reader.infrastructure.preference.SortUnreadArticlesPreference
 import me.ash.reader.ui.component.FilterBar
 import me.ash.reader.ui.component.base.FeedbackIconButton
+import me.ash.reader.ui.component.base.lastSyncedDescription
 import me.ash.reader.ui.component.base.RYExtensibleVisibility
 import me.ash.reader.ui.component.base.RYScaffold
 import me.ash.reader.ui.component.scrollbar.VerticalScrollIndicatorFactory
@@ -338,30 +340,51 @@ fun FlowPage(
                         title = {
                             val textStyle = LocalTextStyle.current
                             val color = LocalContentColor.current
-                            if (textStyle.fontSize.value > 18f) {
-                                BasicText(
-                                    modifier =
-                                        Modifier.padding(
-                                            start = if (articleListFeedIcon.value) 34.dp else 8.dp,
-                                            end = 24.dp,
-                                        ),
-                                    text = titleText,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis,
-                                    style = textStyle,
-                                    color = { color },
-                                    autoSize =
-                                        TextAutoSize.StepBased(
-                                            minFontSize = 28.sp,
-                                            maxFontSize = textStyle.fontSize,
-                                        ),
-                                )
-                            } else {
-                                Text(
-                                    text = titleText,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
+                            val isExpanded = textStyle.fontSize.value > 18f
+                            Column {
+                                if (isExpanded) {
+                                    BasicText(
+                                        modifier =
+                                            Modifier.padding(
+                                                start =
+                                                    if (articleListFeedIcon.value) 34.dp else 8.dp,
+                                                end = 24.dp,
+                                            ),
+                                        text = titleText,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                        style = textStyle,
+                                        color = { color },
+                                        autoSize =
+                                            TextAutoSize.StepBased(
+                                                minFontSize = 28.sp,
+                                                maxFontSize = textStyle.fontSize,
+                                            ),
+                                    )
+                                } else {
+                                    Text(
+                                        text = titleText,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
+                                // Only while the bar is expanded: once collapsed there is no room
+                                // for a second line next to the navigation and action icons.
+                                if (isExpanded) {
+                                    Text(
+                                        modifier =
+                                            Modifier.padding(
+                                                start =
+                                                    if (articleListFeedIcon.value) 34.dp else 8.dp,
+                                                end = 24.dp,
+                                            ),
+                                        text = lastSyncedDescription(),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.outline,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
                             }
                         },
                         expandedHeight = 172.dp,
