@@ -68,6 +68,7 @@ These are real defects in upstream ReadYou, not just fork preferences.
 - **Prefetch ignored your network settings.** The prefetch job — the heaviest network operation in the app — was queued with **no constraints**, so it ran on cellular even with *sync only on Wi-Fi* enabled. It now inherits the account's Wi-Fi/charging constraints.
 - **One dead link could retry forever.** A single 404 or paywalled article made the whole prefetch batch `retry()` indefinitely, which also **permanently stalled the widget update** chained after it. Failures are now recorded per article and written off after 3 attempts.
 - **The cache could return the wrong article's content.** `ReaderCacheHelper` shared a single `MessageDigest` across concurrent coroutines. Interleaved `update()` calls can produce a wrong hash — so an article could read *another article's* cached body.
+- **The same photo could be shown twice, stacked.** Sites routinely emit one copy of an image for desktop and another for mobile and let CSS hide one — Ynet ships the photo in a desktop gallery link *and* again inside a `<span class="mobileView">`, same `src`. Readability throws the stylesheets away, so every copy survived. Repeats of an image already shown earlier in the article are now dropped during extraction.
 - **The APK filename was garbage.** The build folded git's stderr into stdout and used the resulting error text as the commit hash.
 
 ---
