@@ -34,6 +34,7 @@ import me.ash.reader.domain.data.SyncRecord
 import me.ash.reader.ui.component.base.DisplayText
 import me.ash.reader.ui.component.base.FeedbackIconButton
 import me.ash.reader.ui.component.base.RYScaffold
+import me.ash.reader.ui.component.base.Subtitle
 import me.ash.reader.ui.ext.collectAsStateValue
 
 @Composable
@@ -74,7 +75,49 @@ fun SyncLogPage(onBack: () -> Unit, viewModel: SyncLogViewModel = hiltViewModel(
                         )
                     }
                 } else {
-                    items(records) { record -> SyncLogItem(record) }
+                    // Split rather than merely labelled: the question this page exists to answer is
+                    // "is background syncing actually happening", and an interleaved list buries it.
+                    val background = records.filter { !it.foreground }
+                    val inApp = records.filter { it.foreground }
+
+                    item {
+                        Subtitle(
+                            modifier = Modifier.padding(horizontal = 24.dp),
+                            text = stringResource(R.string.sync_log_background),
+                        )
+                    }
+                    if (background.isEmpty()) {
+                        item {
+                            Text(
+                                modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
+                                text = stringResource(R.string.sync_log_no_background),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.outline,
+                            )
+                        }
+                    } else {
+                        items(background) { record -> SyncLogItem(record) }
+                    }
+
+                    item {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Subtitle(
+                            modifier = Modifier.padding(horizontal = 24.dp),
+                            text = stringResource(R.string.sync_log_in_app),
+                        )
+                    }
+                    if (inApp.isEmpty()) {
+                        item {
+                            Text(
+                                modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
+                                text = stringResource(R.string.sync_log_no_in_app),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.outline,
+                            )
+                        }
+                    } else {
+                        items(inApp) { record -> SyncLogItem(record) }
+                    }
                 }
 
                 item {

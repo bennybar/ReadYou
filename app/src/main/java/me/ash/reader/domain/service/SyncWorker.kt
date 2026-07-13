@@ -11,6 +11,7 @@ import me.ash.reader.domain.data.SyncRecord
 import me.ash.reader.domain.model.account.Account
 import me.ash.reader.domain.repository.ArticleDao
 import me.ash.reader.domain.repository.ArticleFtsDao
+import me.ash.reader.infrastructure.android.AppForegroundTracker
 import me.ash.reader.infrastructure.rss.ReaderCacheHelper
 
 @HiltWorker
@@ -24,6 +25,7 @@ constructor(
     private val articleFtsDao: ArticleFtsDao,
     private val articleDao: ArticleDao,
     private val syncHistoryLogger: SyncHistoryLogger,
+    private val appForegroundTracker: AppForegroundTracker,
     private val accountService: AccountService,
     private val workManager: WorkManager,
 ) : CoroutineWorker(context, workerParams) {
@@ -49,6 +51,9 @@ constructor(
 
         val startedAt = System.currentTimeMillis()
         val articlesBefore = articleDao.countByAccountId(accountId)
+        // Sampled when the sync starts, not when it ends: a sync begun in the app and left running
+        // while you navigate away is still a sync that happened with the app open.
+        val startedInForeground = appForegroundTracker.isForeground
 
         return rssService
             .get()
@@ -63,6 +68,7 @@ constructor(
                             (articleDao.countByAccountId(accountId) - articlesBefore)
                                 .coerceAtLeast(0),
                         manual = tags.contains(ONETIME_WORK_TAG),
+                        foreground = startedInForeground,
                     )
                 )
             }

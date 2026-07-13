@@ -22,6 +22,10 @@
     <string name="sync_log_desc">History of background syncs</string>
     <string name="sync_log_empty">No syncs recorded yet. The log fills up as background syncs run.</string>
     <string name="sync_log_failed">Failed</string>
+    <string name="sync_log_background">Background</string>
+    <string name="sync_log_in_app">While the app was open</string>
+    <string name="sync_log_no_background">No background syncs recorded yet. If this stays empty, the system is not running them.</string>
+    <string name="sync_log_no_in_app">No syncs recorded while the app was open.</string>
     <string name="sync_log_manual">manual</string>
     <string name="sync_log_scheduled">scheduled</string>
     <string name="sync_log_duration_ms">%1$d ms</string>

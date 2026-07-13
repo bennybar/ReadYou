@@ -19,8 +19,13 @@ data class SyncRecord(
     val durationMs: Long,
     val succeeded: Boolean,
     val newArticles: Int,
-    /** True when the user pulled to refresh; false when WorkManager ran it on a schedule. */
+    /** True when WorkManager ran it as one-time work; false when it fired on the schedule. */
     val manual: Boolean,
+    /**
+     * Whether the app was on screen while the sync ran. Defaulted so entries written before this
+     * field existed still parse; they simply show as background.
+     */
+    val foreground: Boolean = false,
 )
 
 /**
