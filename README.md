@@ -90,6 +90,14 @@ With a large phone, **All articles** + **25%** is the intended configuration.
 
 ---
 
+## Fork housekeeping
+
+- **Application id** is `com.bennybar.readyoureloaded`, so it installs alongside upstream ReadYou rather than replacing it. The app is named **Reloaded**.
+- **The in-app update check** points at this repo's releases, not upstream's. Upstream's APK has a different application id and signing key, so it would install as a separate app rather than updating this one.
+- **"Report an issue"** (Troubleshooting, and the crash screen) opens this repo's issue tracker, not upstream's — bugs in this fork are not upstream's to answer.
+- Release tags are **plain numeric** (`0.18.2`, not `v0.18.2-something`): the updater parses the tag as the version by splitting on `.`, so a `v` prefix or a suffix silently reads as version `0.0.0`.
+- The **Telegram channel** and **wiki** links still point at upstream, on purpose — that is still where the community and the general documentation live.
+
 ## Things worth knowing
 
 **FreshRSS with server-side scraping: leave *Parse full content* OFF.** FreshRSS already sends the full article, and ReadYou renders whatever the server delivers. Turning that toggle on makes the phone throw away your server's good extraction and re-scrape the page itself, usually worse. Use **pull-to-refresh** when you specifically want the site's own version.
