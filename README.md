@@ -32,6 +32,8 @@ Upstream ReadYou can already fetch full articles, but only if you enable *Parse 
 
 The default reader is a **WebView**, which has its own network stack and ignores the image cache entirely — so prefetched images are served back through `WebViewClient.shouldInterceptRequest`. Without that, prefetching images would have done nothing for most users.
 
+Prefetch is **incremental**: once an article's full text is cached, its images are downloaded and it is indexed for search, later syncs skip it entirely — no disk read, no HTML re-parse, no image requests. A steady-state sync costs about a second. (Upstream had no image prefetch at all; an earlier build of this fork re-scanned every article on every sync, which on a large archive was a real battery drain.)
+
 There is also a **Download now** button with live progress (*"Downloading 12 of 340…"*), which deliberately retries links that were previously written off as dead.
 
 ## Full-text search

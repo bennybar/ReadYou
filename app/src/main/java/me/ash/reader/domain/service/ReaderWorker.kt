@@ -12,6 +12,7 @@ import androidx.work.workDataOf
 import coil.ImageLoader
 import coil.request.CachePolicy
 import coil.request.ImageRequest
+import coil.request.SuccessResult
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import java.util.concurrent.atomic.AtomicInteger
@@ -94,14 +95,30 @@ constructor(
                 .map { article ->
                     async {
                         semaphore.withPermit {
-                            val html =
-                                cacheHelper.readFullContent(article.id).getOrNull()
-                                    ?: article.rawDescription
-                            if (article.id in freshlyFetched || article.id !in alreadyIndexed) {
-                                indexForSearch(article, html)
-                            }
-                            if (prefetchImages) {
-                                prefetchImagesFor(article, html)
+                            val needsIndexing =
+                                article.id in freshlyFetched || article.id !in alreadyIndexed
+                            val needsImages =
+                                prefetchImages && !cacheHelper.hasPrefetchedImages(article.id)
+
+                            // An article that is already indexed and whose images are already
+                            // cached costs nothing on later runs. Without this the worker re-read
+                            // every article off disk, re-parsed its HTML and re-issued every image
+                            // request on every sync, forever — pointless work, and on an archive of
+                            // a few thousand articles a real drain on the battery.
+                            if (needsIndexing || needsImages) {
+                                val html =
+                                    cacheHelper.readFullContent(article.id).getOrNull()
+                                        ?: article.rawDescription
+
+                                if (needsIndexing) {
+                                    indexForSearch(article, html)
+                                }
+                                if (needsImages) {
+                                    cacheHelper.recordImagePrefetch(
+                                        articleId = article.id,
+                                        success = prefetchImagesFor(article, html),
+                                    )
+                                }
                             }
                             setProgress(progressData(done.incrementAndGet(), total))
                         }
@@ -133,17 +150,21 @@ constructor(
     private fun progressData(current: Int, total: Int): Data =
         workDataOf(PROGRESS_CURRENT to current, PROGRESS_TOTAL to total)
 
-    private suspend fun prefetchImagesFor(article: Article, html: String) {
-        if (html.isBlank()) return
+    /** @return true when every image was cached, so the article never has to be scanned again. */
+    private suspend fun prefetchImagesFor(article: Article, html: String): Boolean {
+        if (html.isBlank()) return true
 
-        Jsoup.parse(html, article.link)
-            .select("img[src]")
-            .map { it.absUrl("src") }
-            .filter { it.startsWith("http") }
-            .distinct()
-            .forEach { url ->
-                // The disk cache stores the original bytes whatever size we decode at, and nothing
-                // is on screen, so decode at 1x1 to keep large images from blowing up memory here.
+        val urls =
+            Jsoup.parse(html, article.link)
+                .select("img[src]")
+                .map { it.absUrl("src") }
+                .filter { it.startsWith("http") }
+                .distinct()
+
+        return urls.all { url ->
+            // The disk cache stores the original bytes whatever size we decode at, and nothing is
+            // on screen, so decode at 1x1 to keep large images from blowing up memory here.
+            val result =
                 imageLoader.execute(
                     ImageRequest.Builder(applicationContext)
                         .data(url)
@@ -151,7 +172,8 @@ constructor(
                         .memoryCachePolicy(CachePolicy.DISABLED)
                         .build()
                 )
-            }
+            result is SuccessResult
+        }
     }
 
     companion object {
