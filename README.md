@@ -56,6 +56,8 @@ FreshRSS reports labels as `"type": "tag"` and folders as `"type": "folder"`, an
 - **Last synced 5 minutes ago** under the title on both the feed list and the article list, in your local time zone. It re-ticks while the page is open.
 - **Sync log** (*Settings → Sync log*) — a history of the last 100 sync runs, so you can actually tell whether background syncing is happening. Entries are **split into "Background" and "While the app was open"**, because the whole point of the page is to answer "is the system actually syncing me when I'm not looking", and an interleaved list buries that. Each entry shows the **local time** it ran, whether it succeeded, how many new articles it brought in, how long it took, and whether it was scheduled or manual.
 
+  If the **Background** group stays empty, the system is not running your syncs. The usual culprit is battery optimisation — Android is allowed to doze the app, so it postpones the periodic sync until you next open it, and every sync then shows up as having run "while the app was open". The page detects this and offers a one-tap **Allow background activity** exemption. Upstream never asks for it and does not even declare the permission. (Samsung is especially aggressive here: also turn off *Put app to sleep* for it in the device's battery settings.)
+
   WorkManager's own tags can't answer this — a one-time sync isn't necessarily user-triggered (sync-on-start uses one-time work too), and a periodic sync can fire while the app is open — so the app tracks started activities and samples that when a sync *begins*. This is separate from upstream's *Troubleshooting* logs, which only keep stack traces of syncs that threw.
 
 ---

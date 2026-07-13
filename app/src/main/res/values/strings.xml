@@ -22,6 +22,9 @@
     <string name="sync_log_desc">History of background syncs</string>
     <string name="sync_log_empty">No syncs recorded yet. The log fills up as background syncs run.</string>
     <string name="sync_log_failed">Failed</string>
+    <string name="battery_restricted_title">Android is holding back background syncs</string>
+    <string name="battery_restricted_desc">The system is allowed to put this app to sleep, so it postpones scheduled syncs until you next open it. Allow unrestricted background activity to let them run on time.</string>
+    <string name="battery_restricted_action">Allow background activity</string>
     <string name="sync_log_background">Background</string>
     <string name="sync_log_in_app">While the app was open</string>
     <string name="sync_log_no_background">No background syncs recorded yet. If this stays empty, the system is not running them.</string>

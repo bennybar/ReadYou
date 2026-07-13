@@ -1,5 +1,7 @@
 package me.ash.reader.ui.page.settings.synclog
 
+import android.content.Intent
+import android.provider.Settings
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,6 +19,7 @@ import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -25,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import java.text.DateFormat
 import java.util.Date
@@ -63,6 +67,13 @@ fun SyncLogPage(onBack: () -> Unit, viewModel: SyncLogViewModel = hiltViewModel(
                 item {
                     DisplayText(text = stringResource(R.string.sync_log), desc = "")
                     Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                if (viewModel.isBatteryRestricted) {
+                    item {
+                        BatteryRestrictionBanner()
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
                 }
 
                 if (records.isEmpty()) {
@@ -127,6 +138,62 @@ fun SyncLogPage(onBack: () -> Unit, viewModel: SyncLogViewModel = hiltViewModel(
             }
         },
     )
+}
+
+/**
+ * The single most common reason background syncs never happen: the system is allowed to doze the
+ * app, so it defers the periodic sync until the app is next opened.
+ */
+@Composable
+private fun BatteryRestrictionBanner() {
+    val context = LocalContext.current
+
+    Surface(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+        color = MaterialTheme.colorScheme.errorContainer,
+        shape = MaterialTheme.shapes.large,
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = stringResource(R.string.battery_restricted_title),
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onErrorContainer,
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = stringResource(R.string.battery_restricted_desc),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onErrorContainer,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            TextButton(
+                onClick = {
+                    runCatching {
+                            context.startActivity(
+                                Intent(
+                                        Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                                        "package:${context.packageName}".toUri(),
+                                    )
+                                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            )
+                        }
+                        .onFailure {
+                            // Some OEMs do not honour the direct request; fall back to the app's
+                            // own settings page, from which the user can still change it.
+                            context.startActivity(
+                                Intent(
+                                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                        "package:${context.packageName}".toUri(),
+                                    )
+                                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            )
+                        }
+                }
+            ) {
+                Text(text = stringResource(R.string.battery_restricted_action))
+            }
+        }
+    }
 }
 
 @Composable
