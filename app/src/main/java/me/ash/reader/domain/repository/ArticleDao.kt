@@ -480,6 +480,9 @@ interface ArticleDao {
     )
     suspend fun queryReadLaterArticleIds(accountId: Int): List<String>
 
+    @Query("SELECT COUNT(*) FROM article WHERE accountId = :accountId")
+    suspend fun countByAccountId(accountId: Int): Int
+
     @Query(
         """
         DELETE FROM article

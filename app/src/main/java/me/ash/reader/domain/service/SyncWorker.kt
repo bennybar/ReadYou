@@ -6,7 +6,10 @@ import androidx.work.*
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import java.util.concurrent.TimeUnit
+import me.ash.reader.domain.data.SyncHistoryLogger
+import me.ash.reader.domain.data.SyncRecord
 import me.ash.reader.domain.model.account.Account
+import me.ash.reader.domain.repository.ArticleDao
 import me.ash.reader.domain.repository.ArticleFtsDao
 import me.ash.reader.infrastructure.rss.ReaderCacheHelper
 
@@ -19,6 +22,8 @@ constructor(
     private val rssService: RssService,
     private val readerCacheHelper: ReaderCacheHelper,
     private val articleFtsDao: ArticleFtsDao,
+    private val articleDao: ArticleDao,
+    private val syncHistoryLogger: SyncHistoryLogger,
     private val accountService: AccountService,
     private val workManager: WorkManager,
 ) : CoroutineWorker(context, workerParams) {
@@ -42,9 +47,25 @@ constructor(
                 )
                 .build()
 
+        val startedAt = System.currentTimeMillis()
+        val articlesBefore = articleDao.countByAccountId(accountId)
+
         return rssService
             .get()
             .sync(accountId = accountId, feedId = feedId, groupId = groupId)
+            .also { result ->
+                syncHistoryLogger.record(
+                    SyncRecord(
+                        startedAt = startedAt,
+                        durationMs = System.currentTimeMillis() - startedAt,
+                        succeeded = result is Result.Success,
+                        newArticles =
+                            (articleDao.countByAccountId(accountId) - articlesBefore)
+                                .coerceAtLeast(0),
+                        manual = tags.contains(ONETIME_WORK_TAG),
+                    )
+                )
+            }
             .also {
                 rssService.get().clearKeepArchivedArticles().forEach {
                     readerCacheHelper.deleteCacheFor(articleId = it.id)

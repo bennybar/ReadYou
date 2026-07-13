@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.BugReport
+import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.Palette
@@ -51,6 +52,7 @@ fun SettingsPage(
     navigateToColorAndStyle: () -> Unit,
     navigateToInteraction: () -> Unit,
     navigateToLanguages: () -> Unit,
+    navigateToSyncLog: () -> Unit,
     navigateToTroubleshooting: () -> Unit,
     navigateToTipsAndSupport: () -> Unit,
 ) {
@@ -133,6 +135,14 @@ fun SettingsPage(
                         desc = Locale.getDefault().toDisplayName(),
                         icon = Icons.Outlined.Language,
                         onClick = navigateToLanguages
+                    )
+                }
+                item {
+                    SelectableSettingGroupItem(
+                        title = stringResource(R.string.sync_log),
+                        desc = stringResource(R.string.sync_log_desc),
+                        icon = Icons.Outlined.History,
+                        onClick = navigateToSyncLog
                     )
                 }
                 item {

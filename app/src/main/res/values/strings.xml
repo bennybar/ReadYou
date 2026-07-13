@@ -18,6 +18,19 @@
     </plurals>
     <string name="read_later">Read later</string>
     <string name="last_synced">Last synced %1$s</string>
+    <string name="sync_log">Sync log</string>
+    <string name="sync_log_desc">History of background syncs</string>
+    <string name="sync_log_empty">No syncs recorded yet. The log fills up as background syncs run.</string>
+    <string name="sync_log_failed">Failed</string>
+    <string name="sync_log_manual">manual</string>
+    <string name="sync_log_scheduled">scheduled</string>
+    <string name="sync_log_duration_ms">%1$d ms</string>
+    <string name="sync_log_duration_s">%1$d s</string>
+    <plurals name="sync_log_new_articles">
+        <item quantity="zero">No new articles</item>
+        <item quantity="one">%1$d new article</item>
+        <item quantity="other">%1$d new articles</item>
+    </plurals>
     <string name="remove_read_immediately">Remove read articles immediately</string>
     <string name="remove_read_immediately_desc">Drop articles from the Unread list as soon as they are read, instead of leaving them greyed out</string>
     <string name="never_synced">Never synced</string>

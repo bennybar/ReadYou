@@ -54,6 +54,7 @@ FreshRSS reports labels as `"type": "tag"` and folders as `"type": "folder"`, an
 - **Pull down on an article to re-download it from the source.** Always re-fetches from the article's own URL, whatever the feed delivered — useful when a page was captured badly or has since been updated. A failed refresh keeps the cached copy rather than dropping you onto an error screen. (Pull-down no longer loads the previous article; pull-up still loads the next one.)
 - **Remove read articles immediately** — in the Unread filter, an article leaves the list the moment it is read instead of lingering greyed out. Off by default. The article you are *currently* reading deliberately stays in the list, because the reader locates it by index in the paging snapshot to work out next/previous; it drops out when you close the reader.
 - **Last synced 5 minutes ago** under the title on both the feed list and the article list, in your local time zone. It re-ticks while the page is open.
+- **Sync log** (*Settings → Sync log*) — a history of the last 100 sync runs, so you can actually tell whether background syncing is happening. Each entry shows the **local time** it ran, whether it succeeded, how many new articles it brought in, how long it took, and whether it was scheduled or manual. This is separate from upstream's *Troubleshooting* logs, which only keep stack traces of syncs that threw.
 
 ---
 
@@ -79,6 +80,8 @@ Everything new lives under **Settings → Interaction**:
 - *Image cache size* — 2% / 5% / 10% / 25% of free storage
 - *Download now* — with live progress
 - *Remove read articles immediately*
+
+And **Settings → Sync log** for the background-sync history.
 
 With a large phone, **All articles** + **25%** is the intended configuration.
 
