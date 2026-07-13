@@ -41,6 +41,12 @@
     <string name="remove_read_immediately">Remove read articles immediately</string>
     <string name="remove_read_immediately_desc">Drop articles from the Unread list as soon as they are read, instead of leaving them greyed out</string>
     <string name="never_synced">Never synced</string>
+    <string name="unread_badge">Unread count on the app icon</string>
+    <string name="unread_badge_desc">Android can only badge an icon from a live notification, so this keeps one silent notification showing the unread count. Whether the number is drawn is up to your launcher.</string>
+    <plurals name="unread_badge_content">
+        <item quantity="one">%1$d unread article</item>
+        <item quantity="other">%1$d unread articles</item>
+    </plurals>
     <plurals name="read_later_desc">
         <item quantity="one">%1$d item to read later</item>
         <item quantity="other">%1$d items to read later</item>

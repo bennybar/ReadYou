@@ -31,6 +31,7 @@ import me.ash.reader.infrastructure.preference.LocalHideEmptyGroups
 import me.ash.reader.infrastructure.preference.LocalImageCacheSize
 import me.ash.reader.infrastructure.preference.LocalPrefetchScope
 import me.ash.reader.infrastructure.preference.LocalRemoveReadImmediately
+import me.ash.reader.infrastructure.preference.LocalUnreadBadge
 import me.ash.reader.infrastructure.preference.PrefetchScopePreference
 import me.ash.reader.infrastructure.preference.LocalInitialFilter
 import me.ash.reader.infrastructure.preference.LocalInitialPage
@@ -78,6 +79,7 @@ fun InteractionPage(
     val prefetchImages = LocalPrefetchImages.current
     val prefetchScope = LocalPrefetchScope.current
     val removeReadImmediately = LocalRemoveReadImmediately.current
+    val unreadBadge = LocalUnreadBadge.current
     val imageCacheSize = LocalImageCacheSize.current
     val sortUnreadArticles = LocalSortUnreadArticles.current
     val pullToSwitchArticle = LocalPullToSwitchArticle.current
@@ -144,6 +146,15 @@ fun InteractionPage(
                         modifier = Modifier.padding(horizontal = 24.dp),
                         text = stringResource(R.string.feeds_page),
                     )
+                    SettingItem(
+                        title = stringResource(R.string.unread_badge),
+                        desc = stringResource(R.string.unread_badge_desc),
+                        onClick = { unreadBadge.toggle(context, scope) },
+                    ) {
+                        RYSwitch(activated = unreadBadge.value) {
+                            unreadBadge.toggle(context, scope)
+                        }
+                    }
                     SettingItem(
                         title = stringResource(R.string.hide_empty_groups),
                         onClick = {

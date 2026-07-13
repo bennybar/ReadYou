@@ -483,6 +483,10 @@ interface ArticleDao {
     @Query("SELECT COUNT(*) FROM article WHERE accountId = :accountId")
     suspend fun countByAccountId(accountId: Int): Int
 
+    /** Emits again whenever the article table changes, which is what keeps the badge honest. */
+    @Query("SELECT COUNT(*) FROM article WHERE accountId = :accountId AND isUnread = 1")
+    fun countUnreadByAccountIdFlow(accountId: Int): Flow<Int>
+
     @Query(
         """
         DELETE FROM article

@@ -137,6 +137,7 @@ class SettingsProvider @Inject constructor(
             LocalPrefetchImages provides settings.prefetchImages,
             LocalPrefetchScope provides settings.prefetchScope,
             LocalRemoveReadImmediately provides settings.removeReadImmediately,
+            LocalUnreadBadge provides settings.unreadBadge,
             LocalImageCacheSize provides settings.imageCacheSize,
             LocalPullToSwitchArticle provides settings.pullToSwitchArticle,
             LocalOpenLink provides settings.openLink,

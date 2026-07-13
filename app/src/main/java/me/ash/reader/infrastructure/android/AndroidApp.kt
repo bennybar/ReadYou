@@ -67,6 +67,8 @@ class AndroidApp : Application(), Configuration.Provider {
 
     @Inject lateinit var appForegroundTracker: AppForegroundTracker
 
+    @Inject lateinit var unreadBadgeHelper: UnreadBadgeHelper
+
     @Inject lateinit var accountService: AccountService
 
     @Inject lateinit var localRssService: LocalRssService
@@ -100,6 +102,7 @@ class AndroidApp : Application(), Configuration.Provider {
         super.onCreate()
         CrashHandler(this)
         registerActivityLifecycleCallbacks(appForegroundTracker)
+        unreadBadgeHelper.start()
         if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
         }

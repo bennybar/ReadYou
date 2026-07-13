@@ -79,6 +79,7 @@ data class Settings(
     val prefetchScope: PrefetchScopePreference = PrefetchScopePreference.default,
     val removeReadImmediately: RemoveReadImmediatelyPreference =
         RemoveReadImmediatelyPreference.default,
+    val unreadBadge: UnreadBadgePreference = UnreadBadgePreference.default,
     val imageCacheSize: ImageCacheSizePreference = ImageCacheSizePreference.default,
     val pullToSwitchFeed: PullToLoadNextFeedPreference = PullToLoadNextFeedPreference.default,
     val pullToSwitchArticle: PullToSwitchArticlePreference = PullToSwitchArticlePreference.default,

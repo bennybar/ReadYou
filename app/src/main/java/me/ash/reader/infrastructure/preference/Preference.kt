@@ -85,6 +85,7 @@ fun Preferences.toSettings(): Settings {
         prefetchImages = PrefetchImagesPreference.fromPreferences(this),
         prefetchScope = PrefetchScopePreference.fromPreferences(this),
         removeReadImmediately = RemoveReadImmediatelyPreference.fromPreferences(this),
+        unreadBadge = UnreadBadgePreference.fromPreferences(this),
         imageCacheSize = ImageCacheSizePreference.fromPreferences(this),
         pullToSwitchFeed = PullToLoadNextFeedPreference.fromPreference(this),
         pullToSwitchArticle = PullToSwitchArticlePreference.fromPreference(this),
