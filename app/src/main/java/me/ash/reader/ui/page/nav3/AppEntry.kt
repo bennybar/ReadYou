@@ -1,10 +1,6 @@
 package me.ash.reader.ui.page.nav3
 
-import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
@@ -61,12 +57,6 @@ import me.ash.reader.ui.page.startup.StartupPage
 
 private const val INITIAL_OFFSET_FACTOR = 0.10f
 
-/** How far the screen being dismissed slides, as a fraction of the width, during predictive back. */
-private const val PREDICTIVE_DISMISS_FACTOR = 0.55f
-
-/** How far both screens shrink, so the destination reads as sitting behind the one you are peeling away. */
-private const val PREDICTIVE_PEEK_SCALE = 0.9f
-
 @OptIn(
     ExperimentalSharedTransitionApi::class,
     ExperimentalMaterial3AdaptiveApi::class,
@@ -111,23 +101,11 @@ fun AppEntry(backStack: NavBackStack<NavKey>) {
                 ) togetherWith
                     materialSharedAxisXOut(targetOffsetX = { (it * INITIAL_OFFSET_FACTOR).toInt() })
             },
-            // Predictive back gets its own animation rather than reusing the ordinary pop.
-            // A pop only has to get out of the way, so it slides a tenth of the width; a
-            // predictive back is scrubbed by the finger and has to *show you where you are going*.
-            // The screen being dismissed therefore travels far enough, and shrinks enough, to
-            // uncover the destination behind it, which scales up into place as the drag proceeds.
             predictivePopTransitionSpec = {
-                ContentTransform(
-                    // Opaque, and explicitly behind: cross-fading the two screens instead just
-                    // double-exposes them, which reads as ghosting rather than as a screen being
-                    // peeled away from the one underneath.
-                    targetContentEnter = scaleIn(initialScale = PREDICTIVE_PEEK_SCALE),
-                    initialContentExit =
-                        slideOutHorizontally(
-                            targetOffsetX = { (it * PREDICTIVE_DISMISS_FACTOR).toInt() }
-                        ) + scaleOut(targetScale = PREDICTIVE_PEEK_SCALE),
-                    targetContentZIndex = -1f,
-                )
+                materialSharedAxisXIn(
+                    initialOffsetX = { -(it * INITIAL_OFFSET_FACTOR).toInt() }
+                ) togetherWith
+                    materialSharedAxisXOut(targetOffsetX = { (it * INITIAL_OFFSET_FACTOR).toInt() })
             },
             onBack = { backStack.removeLastOrNull() },
             entryProvider = { key ->
