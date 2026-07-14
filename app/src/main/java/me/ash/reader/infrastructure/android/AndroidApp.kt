@@ -101,6 +101,7 @@ class AndroidApp : Application(), Configuration.Provider {
     override fun onCreate() {
         super.onCreate()
         CrashHandler(this)
+        migrateArchiveOutOfCache(this)
         registerActivityLifecycleCallbacks(appForegroundTracker)
         unreadBadgeHelper.start()
         if (BuildConfig.DEBUG) {

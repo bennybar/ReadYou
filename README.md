@@ -30,11 +30,25 @@ Upstream ReadYou can already fetch full articles, but only if you enable *Parse 
 | What's kept | unread articles only — an article lost its offline copy the moment you read it | **unread / unread + starred / all articles** |
 | Image cache | hardcoded to 2% of disk | **selectable, up to 25%** |
 
+**The archive lives in `filesDir`, not the cache.** Upstream kept the extracted article text and the image cache under `cacheDir` — precisely the directory Android is free to delete under storage pressure, and which "Clear cache" wipes in one tap. Worse, the search index lives in the database and survives that, so an evicted cache left search returning articles whose text no longer existed on the device. An existing archive is migrated out of the cache on first launch.
+
 The default reader is a **WebView**, which has its own network stack and ignores the image cache entirely — so prefetched images are served back through `WebViewClient.shouldInterceptRequest`. Without that, prefetching images would have done nothing for most users.
 
 Prefetch is **incremental**: once an article's full text is cached, its images are downloaded and it is indexed for search, later syncs skip it entirely — no disk read, no HTML re-parse, no image requests. A steady-state sync costs about a second. (Upstream had no image prefetch at all; an earlier build of this fork re-scanned every article on every sync, which on a large archive was a real battery drain.)
 
 There is also a **Download now** button with live progress (*"Downloading 12 of 340…"*), which deliberately retries links that were previously written off as dead.
+
+## The same story, collapsed
+
+Sites republish one article under several sections, so the same piece arrives two or three times with different URLs. Mako carries a story under `/news-money/tech12/`, `/news-military/` and `/nexter-news/` — every copy pointing at the same article id. In one sample of a Mako feed, **3 of 20 items were duplicates**.
+
+Every copy after the first is now hidden from the lists, the counts, search and the prefetcher, and retired as read (on the server too, so it cannot quietly inflate the unread count in FreshRSS forever).
+
+The key is deliberately strict — the **host, the site's own article id from the URL, and the title must all match**:
+
+- The publish timestamp is not part of it: copies of one story do not always share one (two Mako pairs did; a third was six hours apart).
+- The article id alone is not enough — a site whose URLs carry no meaningful last segment would collapse everything it publishes.
+- The title alone is not enough — a daily column keeps its headline, so keying on it would hide every edition but the first. Its article id changes, so requiring both keeps it safe.
 
 ## Full-text search
 
@@ -74,6 +88,7 @@ These are real defects in upstream ReadYou, not just fork preferences.
 - **One dead link could retry forever.** A single 404 or paywalled article made the whole prefetch batch `retry()` indefinitely, which also **permanently stalled the widget update** chained after it. Failures are now recorded per article and written off after 3 attempts.
 - **The cache could return the wrong article's content.** `ReaderCacheHelper` shared a single `MessageDigest` across concurrent coroutines. Interleaved `update()` calls can produce a wrong hash — so an article could read *another article's* cached body.
 - **The same photo could be shown twice, stacked.** Sites routinely emit one copy of an image for desktop and another for mobile and let CSS hide one — Ynet ships the photo in a desktop gallery link *and* again inside a `<span class="mobileView">`, same `src`. Readability throws the stylesheets away, so every copy survived. Repeats of an image already shown earlier in the article are now dropped during extraction.
+- **A start-up race could kill the app.** `GroupWithFeedsListUseCase` declared its `init` block *above* the flows it uses, and Kotlin runs initialisers in declaration order — so coroutines launched from `init` could reach `feedsFlow` while it was still null and die collecting it. Timing-dependent, and it fires as soon as anything shifts start-up timing.
 - **The APK filename was garbage.** The build folded git's stderr into stdout and used the resulting error text as the commit hash.
 
 ---

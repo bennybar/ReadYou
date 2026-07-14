@@ -15,7 +15,8 @@ import java.util.*
         childColumns = ["feedId"],
         onDelete = ForeignKey.CASCADE,
         onUpdate = ForeignKey.CASCADE
-    )]
+    )],
+    indices = [Index(value = ["accountId", "dedupeKey"])]
 )
 data class Article(
     @PrimaryKey
@@ -49,6 +50,21 @@ data class Article(
     var isReadLater: Boolean = false,
     @ColumnInfo
     var updateAt: Date? = null,
+    /**
+     * Identifies the same story arriving more than once. Sites republish one article under several
+     * sections, so the same piece turns up two or three times with different URLs — Mako, for
+     * instance, carries a story under /tech12/, /news-military/ and /nexter-news/, all pointing at
+     * the same article id.
+     *
+     * Host, the site's own article id from the URL, and the title must all match, which is
+     * deliberately strict: a site republishing a daily column under the same headline keeps a
+     * distinct article id, so it is not collapsed.
+     */
+    @ColumnInfo(defaultValue = "NULL")
+    var dedupeKey: String? = null,
+    /** True for every copy after the first, which is the one the app shows. */
+    @ColumnInfo(defaultValue = "0")
+    var isDuplicate: Boolean = false,
 ) {
 
     @Ignore

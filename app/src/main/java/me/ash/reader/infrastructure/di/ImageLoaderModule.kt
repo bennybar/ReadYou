@@ -17,6 +17,8 @@ import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import me.ash.reader.infrastructure.android.ARCHIVE_IMAGES
+import me.ash.reader.infrastructure.android.archiveDir
 import me.ash.reader.infrastructure.preference.ImageCacheSizePreference
 import me.ash.reader.ui.ext.dataStore
 import okhttp3.OkHttpClient
@@ -55,7 +57,9 @@ object ImageLoaderModule {
             // Enable disk cache
             .diskCache(
                 DiskCache.Builder()
-                    .directory(context.cacheDir.resolve("images"))
+                    // The prefetched images are part of the offline archive, so they must not sit
+                    // in a directory the system is free to reclaim.
+                    .directory(archiveDir(context, ARCHIVE_IMAGES))
                     .maxSizePercent(imageCacheSizePercent(context))
                     .build()
             )

@@ -16,6 +16,7 @@ import me.ash.reader.domain.model.account.Account
 import me.ash.reader.domain.model.article.ArchivedArticle
 import me.ash.reader.domain.model.article.Article
 import me.ash.reader.domain.model.article.ArticleWithFeed
+import me.ash.reader.domain.model.article.dedupeKeyOf
 import me.ash.reader.domain.model.feed.Feed
 import me.ash.reader.domain.model.group.Group
 import me.ash.reader.domain.model.group.GroupWithFeed
@@ -544,6 +545,43 @@ abstract class AbstractRssRepository(
         if (tokens.isEmpty()) return NO_FTS_MATCH
         return tokens.mapIndexed { i, t -> if (i == tokens.lastIndex) "$t*" else t }
             .joinToString(" ")
+    }
+
+    /**
+     * Collapses the same story arriving more than once.
+     *
+     * Sites republish one article under several sections, so a single piece turns up two or three
+     * times with different URLs. Every copy after the first is hidden from the lists, the counts,
+     * search and the prefetcher.
+     *
+     * The hidden copy is also retired as read, including on the server: it is never going to be
+     * opened, so leaving it unread would quietly inflate the unread count in FreshRSS forever.
+     */
+    suspend fun dedupeArticles(accountId: Int) {
+        val unkeyed = articleDao.queryArticlesWithoutDedupeKey(accountId)
+        if (unkeyed.isNotEmpty()) {
+            articleDao.update(
+                *unkeyed
+                    .onEach {
+                        // Empty rather than null for an article we cannot key, so it is not
+                        // reconsidered on every sync for the rest of its life.
+                        it.dedupeKey = dedupeKeyOf(it.link, it.title).orEmpty()
+                    }
+                    .toTypedArray()
+            )
+        }
+
+        articleDao.markDuplicates(accountId)
+
+        articleDao.queryUnreadDuplicateIds(accountId).forEach { articleId ->
+            markAsRead(
+                groupId = null,
+                feedId = null,
+                articleId = articleId,
+                before = null,
+                isUnread = false,
+            )
+        }
     }
 
     suspend fun queryPrefetchArticles(allFeeds: Boolean, scope: PrefetchScopePreference) =

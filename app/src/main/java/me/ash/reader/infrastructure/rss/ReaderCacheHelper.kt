@@ -11,6 +11,8 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import me.ash.reader.domain.model.article.Article
 import me.ash.reader.domain.service.AccountService
+import me.ash.reader.infrastructure.android.ARCHIVE_READABILITY
+import me.ash.reader.infrastructure.android.archiveDir
 import me.ash.reader.infrastructure.di.IODispatcher
 
 enum class PrefetchResult {
@@ -32,7 +34,8 @@ constructor(
     private val rssHelper: RssHelper,
     private val accountService: AccountService,
 ) {
-    private val cacheDir = context.cacheDir.resolve("readability")
+    // filesDir, not cacheDir: the archive is meant to survive, and Android deletes caches.
+    private val cacheDir = archiveDir(context, ARCHIVE_READABILITY)
 
     private val currentCacheDir: File
         get() = cacheDir.resolve(accountService.getCurrentAccountId().toString())

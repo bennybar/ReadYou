@@ -73,6 +73,8 @@ constructor(
                 )
             }
             .also {
+                // Before the prefetcher runs, so duplicates are never fetched or cached.
+                rssService.get().dedupeArticles(accountId)
                 rssService.get().clearKeepArchivedArticles().forEach {
                     readerCacheHelper.deleteCacheFor(articleId = it.id)
                     articleFtsDao.deleteByArticleId(articleId = it.id)

@@ -89,6 +89,7 @@ interface ArticleDao {
         """
         SELECT * FROM article
         WHERE accountId = :accountId 
+        AND isDuplicate = 0
         AND feedId IN (
             SELECT id FROM feed WHERE groupId = :groupId
         )
@@ -114,6 +115,7 @@ interface ArticleDao {
         """
         SELECT * FROM article
         WHERE accountId = :accountId 
+        AND isDuplicate = 0
         AND feedId IN (
             SELECT id FROM feed WHERE groupId = :groupId
         )
@@ -139,6 +141,7 @@ interface ArticleDao {
         """
         SELECT * FROM article
         WHERE accountId = :accountId
+        AND isDuplicate = 0
         AND feedId IN (
             SELECT id FROM feed WHERE groupId = :groupId
         )
@@ -164,6 +167,7 @@ interface ArticleDao {
         """
         SELECT * FROM article
         WHERE accountId = :accountId 
+        AND isDuplicate = 0
         AND feedId IN (
             SELECT id FROM feed WHERE groupId = :groupId
         )
@@ -184,6 +188,7 @@ interface ArticleDao {
         """
         SELECT * FROM article
         WHERE accountId = :accountId 
+        AND isDuplicate = 0
         AND feedId = :feedId
         AND isUnread = :isUnread
         AND id IN (
@@ -207,6 +212,7 @@ interface ArticleDao {
         """
         SELECT * FROM article
         WHERE accountId = :accountId 
+        AND isDuplicate = 0
         AND feedId = :feedId
         AND isStarred = :isStarred
         AND id IN (
@@ -230,6 +236,7 @@ interface ArticleDao {
         """
         SELECT * FROM article
         WHERE accountId = :accountId
+        AND isDuplicate = 0
         AND feedId = :feedId
         AND isReadLater = :isReadLater
         AND id IN (
@@ -253,6 +260,7 @@ interface ArticleDao {
         """
         SELECT * FROM article
         WHERE accountId = :accountId 
+        AND isDuplicate = 0
         AND feedId = :feedId 
         AND id IN (
             SELECT articleId FROM article_fts WHERE article_fts MATCH :text
@@ -271,6 +279,7 @@ interface ArticleDao {
         """
         SELECT * FROM article
         WHERE accountId = :accountId 
+        AND isDuplicate = 0
         AND isUnread = :isUnread
         AND id IN (
             SELECT articleId FROM article_fts WHERE article_fts MATCH :text
@@ -289,6 +298,7 @@ interface ArticleDao {
         """
         SELECT * FROM article
         WHERE accountId = :accountId 
+        AND isDuplicate = 0
         AND isStarred = :isStarred
         AND id IN (
             SELECT articleId FROM article_fts WHERE article_fts MATCH :text
@@ -307,6 +317,7 @@ interface ArticleDao {
         """
         SELECT * FROM article
         WHERE accountId = :accountId
+        AND isDuplicate = 0
         AND isReadLater = :isReadLater
         AND id IN (
             SELECT articleId FROM article_fts WHERE article_fts MATCH :text
@@ -325,6 +336,7 @@ interface ArticleDao {
         """
         SELECT * FROM article
         WHERE accountId = :accountId 
+        AND isDuplicate = 0
         AND id IN (
             SELECT articleId FROM article_fts WHERE article_fts MATCH :text
         )
@@ -475,6 +487,8 @@ interface ArticleDao {
         """
         SELECT id FROM article
         WHERE accountId = :accountId
+        AND isDuplicate = 0
+        AND isDuplicate = 0
         AND isReadLater = 1
         """
     )
@@ -528,6 +542,7 @@ interface ArticleDao {
         FROM article
         WHERE isUnread = :isUnread
         AND accountId = :accountId
+        AND isDuplicate = 0
         GROUP BY feedId
         """
     )
@@ -543,6 +558,7 @@ interface ArticleDao {
         FROM article
         WHERE isStarred = :isStarred
         AND accountId = :accountId
+        AND isDuplicate = 0
         GROUP BY feedId
         """
     )
@@ -557,6 +573,7 @@ interface ArticleDao {
         SELECT feedId, COUNT(*) AS important
         FROM article
         WHERE accountId = :accountId
+        AND isDuplicate = 0
         GROUP BY feedId
         """
     )
@@ -569,6 +586,7 @@ interface ArticleDao {
         """
         SELECT * FROM article 
         WHERE accountId = :accountId
+        AND isDuplicate = 0
         ORDER BY
             CASE WHEN :sortAscending = 1 THEN date END ASC,
             CASE WHEN :sortAscending = 0 THEN date END DESC
@@ -584,6 +602,7 @@ interface ArticleDao {
         SELECT * FROM article
         WHERE isStarred = :isStarred 
         AND accountId = :accountId
+        AND isDuplicate = 0
         ORDER BY
             CASE WHEN :sortAscending = 1 THEN date END ASC,
             CASE WHEN :sortAscending = 0 THEN date END DESC
@@ -599,6 +618,7 @@ interface ArticleDao {
         SELECT * FROM article
         WHERE isReadLater = :isReadLater
         AND accountId = :accountId
+        AND isDuplicate = 0
         ORDER BY
             CASE WHEN :sortAscending = 1 THEN date END ASC,
             CASE WHEN :sortAscending = 0 THEN date END DESC
@@ -614,6 +634,7 @@ interface ArticleDao {
         SELECT * FROM article 
         WHERE isUnread = :isUnread 
         AND accountId = :accountId
+        AND isDuplicate = 0
         ORDER BY
             CASE WHEN :sortAscending = 1 THEN date END ASC,
             CASE WHEN :sortAscending = 0 THEN date END DESC
@@ -629,12 +650,14 @@ interface ArticleDao {
         """
         SELECT a.id, a.date, a.title, a.author, a.rawDescription, 
         a.shortDescription, a.fullContent, a.img, a.link, a.feedId, 
-        a.accountId, a.isUnread, a.isStarred, a.isReadLater, a.updateAt 
+        a.accountId, a.isUnread, a.isStarred, a.isReadLater, a.updateAt,
+        a.dedupeKey, a.isDuplicate 
         FROM article AS a
         LEFT JOIN feed AS b ON b.id = a.feedId
         LEFT JOIN `group` AS c ON c.id = b.groupId
         WHERE c.id = :groupId
         AND a.accountId = :accountId
+        AND a.isDuplicate = 0
         ORDER BY
             CASE WHEN :sortAscending = 1 THEN a.date END ASC,
             CASE WHEN :sortAscending = 0 THEN a.date END DESC
@@ -650,13 +673,15 @@ interface ArticleDao {
         """
         SELECT a.id, a.date, a.title, a.author, a.rawDescription, 
         a.shortDescription, a.fullContent, a.img, a.link, a.feedId, 
-        a.accountId, a.isUnread, a.isStarred, a.isReadLater, a.updateAt 
+        a.accountId, a.isUnread, a.isStarred, a.isReadLater, a.updateAt,
+        a.dedupeKey, a.isDuplicate 
         FROM article AS a
         LEFT JOIN feed AS b ON b.id = a.feedId
         LEFT JOIN `group` AS c ON c.id = b.groupId
         WHERE c.id = :groupId
         AND a.isStarred = :isStarred
         AND a.accountId = :accountId
+        AND a.isDuplicate = 0
         ORDER BY
             CASE WHEN :sortAscending = 1 THEN a.date END ASC,
             CASE WHEN :sortAscending = 0 THEN a.date END DESC
@@ -672,13 +697,15 @@ interface ArticleDao {
         """
         SELECT a.id, a.date, a.title, a.author, a.rawDescription,
         a.shortDescription, a.fullContent, a.img, a.link, a.feedId,
-        a.accountId, a.isUnread, a.isStarred, a.isReadLater, a.updateAt
+        a.accountId, a.isUnread, a.isStarred, a.isReadLater, a.updateAt,
+        a.dedupeKey, a.isDuplicate
         FROM article AS a
         LEFT JOIN feed AS b ON b.id = a.feedId
         LEFT JOIN `group` AS c ON c.id = b.groupId
         WHERE c.id = :groupId
         AND a.isReadLater = :isReadLater
         AND a.accountId = :accountId
+        AND a.isDuplicate = 0
         ORDER BY
             CASE WHEN :sortAscending = 1 THEN a.date END ASC,
             CASE WHEN :sortAscending = 0 THEN a.date END DESC
@@ -694,13 +721,15 @@ interface ArticleDao {
         """
         SELECT a.id, a.date, a.title, a.author, a.rawDescription, 
         a.shortDescription, a.fullContent, a.img, a.link, a.feedId, 
-        a.accountId, a.isUnread, a.isStarred, a.isReadLater, a.updateAt 
+        a.accountId, a.isUnread, a.isStarred, a.isReadLater, a.updateAt,
+        a.dedupeKey, a.isDuplicate 
         FROM article AS a
         LEFT JOIN feed AS b ON b.id = a.feedId
         LEFT JOIN `group` AS c ON c.id = b.groupId
         WHERE c.id = :groupId
         AND a.isUnread = :isUnread
         AND a.accountId = :accountId
+        AND a.isDuplicate = 0
         ORDER BY
             CASE WHEN :sortAscending = 1 THEN a.date END ASC,
             CASE WHEN :sortAscending = 0 THEN a.date END DESC
@@ -716,6 +745,7 @@ interface ArticleDao {
         SELECT * FROM article
         WHERE feedId = :feedId
         AND accountId = :accountId
+        AND isDuplicate = 0
         ORDER BY
             CASE WHEN :sortAscending = 1 THEN date END ASC,
             CASE WHEN :sortAscending = 0 THEN date END DESC
@@ -732,6 +762,7 @@ interface ArticleDao {
         WHERE feedId = :feedId 
         AND isStarred = :isStarred
         AND accountId = :accountId
+        AND isDuplicate = 0
         ORDER BY
             CASE WHEN :sortAscending = 1 THEN date END ASC,
             CASE WHEN :sortAscending = 0 THEN date END DESC
@@ -748,6 +779,7 @@ interface ArticleDao {
         WHERE feedId = :feedId
         AND isReadLater = :isReadLater
         AND accountId = :accountId
+        AND isDuplicate = 0
         ORDER BY
             CASE WHEN :sortAscending = 1 THEN date END ASC,
             CASE WHEN :sortAscending = 0 THEN date END DESC
@@ -764,6 +796,7 @@ interface ArticleDao {
         WHERE feedId = :feedId 
         AND isUnread = :isUnread
         AND accountId = :accountId
+        AND isDuplicate = 0
         ORDER BY
             CASE WHEN :sortAscending = 1 THEN date END ASC,
             CASE WHEN :sortAscending = 0 THEN date END DESC
@@ -779,7 +812,8 @@ interface ArticleDao {
         """
         SELECT a.id, a.date, a.title, a.author, a.rawDescription, 
         a.shortDescription, a.fullContent, a.img, a.link, a.feedId, 
-        a.accountId, a.isUnread, a.isStarred, a.isReadLater, a.updateAt 
+        a.accountId, a.isUnread, a.isStarred, a.isReadLater, a.updateAt,
+        a.dedupeKey, a.isDuplicate 
         FROM article AS a LEFT JOIN feed AS b 
         ON a.feedId = b.id
         WHERE a.feedId = :feedId 
@@ -810,6 +844,7 @@ interface ArticleDao {
         FROM article AS a
         LEFT JOIN feed AS f ON a.feedId = f.id
         WHERE f.accountId = :accountId
+        AND a.isDuplicate = 0
         AND (:allFeeds OR f.isFullContent = 1)
         AND (:includeAll OR a.isUnread = 1 OR (:includeStarred AND a.isStarred = 1))
         """
@@ -980,6 +1015,7 @@ interface ArticleDao {
         """
         SELECT * FROM article
         WHERE accountId = :accountId
+        AND isDuplicate = 0
         AND isUnread = 1
         ORDER BY date desc
         LIMIT :limit
@@ -996,6 +1032,7 @@ interface ArticleDao {
         """
         SELECT * FROM article
         WHERE feedId = :feedId
+        AND isDuplicate = 0
         AND isUnread = 1
         ORDER BY date desc
         LIMIT :limit
@@ -1050,6 +1087,45 @@ interface ArticleDao {
 
     @Update
     suspend fun update(vararg article: Article)
+
+    /** Articles that have not had a dedupe key worked out yet. */
+    @Query("SELECT * FROM article WHERE accountId = :accountId AND dedupeKey IS NULL")
+    suspend fun queryArticlesWithoutDedupeKey(accountId: Int): List<Article>
+
+    /**
+     * Marks every copy of a story after the first as a duplicate.
+     *
+     * Recomputed rather than decided once at insert, so it heals itself: if the copy currently
+     * being shown is archived away, the next one becomes the one on show.
+     */
+    @Query(
+        """
+        UPDATE article
+        SET isDuplicate = CASE
+            WHEN id = (
+                SELECT a2.id FROM article AS a2
+                WHERE a2.accountId = article.accountId
+                AND a2.dedupeKey = article.dedupeKey
+                ORDER BY a2.date ASC, a2.id ASC
+                LIMIT 1
+            ) THEN 0 ELSE 1
+        END
+        WHERE accountId = :accountId
+        AND dedupeKey IS NOT NULL
+        AND dedupeKey != ''
+        """
+    )
+    suspend fun markDuplicates(accountId: Int)
+
+    @Query(
+        """
+        SELECT id FROM article
+        WHERE accountId = :accountId
+        AND isDuplicate = 1
+        AND isUnread = 1
+        """
+    )
+    suspend fun queryUnreadDuplicateIds(accountId: Int): List<String>
 
     @Transaction
     suspend fun insertListIfNotExist(articles: List<Article>, feed: Feed): List<Article> {
