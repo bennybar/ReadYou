@@ -36,10 +36,15 @@
         </intent>
     </queries>
 
+    <!--
+      Predictive back: NavDisplay already declares a predictivePopTransitionSpec and the
+      navigationevent library is on the classpath, so the peek at the screen behind was fully built
+      and simply never fired. Opting out here kept the whole app on the legacy back path.
+    -->
     <application
         android:name=".infrastructure.android.AndroidApp"
         android:allowBackup="true"
-        android:enableOnBackInvokedCallback="false"
+        android:enableOnBackInvokedCallback="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/read_you"
         android:roundIcon="@mipmap/ic_launcher_round"
