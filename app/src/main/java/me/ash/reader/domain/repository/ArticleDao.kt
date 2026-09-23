@@ -357,6 +357,7 @@ interface ArticleDao {
         AND updateAt < :before
         AND isUnread = 0
         AND isStarred = 0
+        AND isReadLater = 0
         """
     )
     suspend fun deleteAllArchivedBeforeThan(
@@ -371,6 +372,7 @@ interface ArticleDao {
         AND updateAt < :before
         AND isUnread = 0
         AND isStarred = 0
+        AND isReadLater = 0
         """
     )
     suspend fun queryArchivedArticleBefore(
@@ -846,7 +848,9 @@ interface ArticleDao {
         WHERE f.accountId = :accountId
         AND a.isDuplicate = 0
         AND (:allFeeds OR f.isFullContent = 1)
-        AND (:includeAll OR a.isUnread = 1 OR (:includeStarred AND a.isStarred = 1))
+        AND (:includeAll OR a.isUnread = 1 OR a.isReadLater = 1
+            OR (:includeStarred AND a.isStarred = 1))
+        ORDER BY a.isReadLater DESC, a.date DESC
         """
     )
     suspend fun queryPrefetchArticles(

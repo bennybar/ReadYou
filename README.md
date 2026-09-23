@@ -62,6 +62,7 @@ Article bodies are now indexed into an **FTS4 table** (schema v8) and every sear
 
 - A bookmark toggle in the reader and a dedicated **filter tab**.
 - Synced to FreshRSS as a label (`user/-/label/Read Later`) via the Google Reader `edit-tag` API, and pulled back on every sync, so the list follows you across devices.
+- **Kept offline whatever the prefetch scope.** A Read Later article is downloaded even after you have read it, ahead of everything else, and *Keep archived articles* never deletes it.
 
 FreshRSS reports labels as `"type": "tag"` and folders as `"type": "folder"`, and ReadYou builds groups from *feed* categories — so the label cannot show up as a bogus group.
 
@@ -88,6 +89,9 @@ These are real defects in upstream ReadYou, not just fork preferences.
 - **One dead link could retry forever.** A single 404 or paywalled article made the whole prefetch batch `retry()` indefinitely, which also **permanently stalled the widget update** chained after it. Failures are now recorded per article and written off after 3 attempts.
 - **The cache could return the wrong article's content.** `ReaderCacheHelper` shared a single `MessageDigest` across concurrent coroutines. Interleaved `update()` calls can produce a wrong hash — so an article could read *another article's* cached body.
 - **The same photo could be shown twice, stacked.** Sites routinely emit one copy of an image for desktop and another for mobile and let CSS hide one — Ynet ships the photo in a desktop gallery link *and* again inside a `<span class="mobileView">`, same `src`. Readability throws the stylesheets away, so every copy survived. Repeats of an image already shown earlier in the article are now dropped during extraction.
+- **A failed full-text fetch showed the word "null".** The fetch fails with a bare `Exception()`, and the reader displayed its message as the article body. It now falls back to the feed's summary.
+- **An empty archive file hid the article forever.** "Is it cached?" only asked whether the file existed, so an empty file — left by a write interrupted mid-way, since the file was created before it was written — showed a blank article that was never re-fetched. Blank files now count as missing, and bodies are written to a temp file and renamed into place.
+- **Images of a later full-text fetch were never downloaded.** If the full text failed on the first pass, the prefetcher cached the *summary's* images and marked the article done; when the full text arrived later (or on pull-to-refresh), its own images were never fetched. Writing a new body now resets that marker.
 - **A start-up race could kill the app.** `GroupWithFeedsListUseCase` declared its `init` block *above* the flows it uses, and Kotlin runs initialisers in declaration order — so coroutines launched from `init` could reach `feedsFlow` while it was still null and die collecting it. Timing-dependent, and it fires as soon as anything shifts start-up timing.
 - **The APK filename was garbage.** The build folded git's stderr into stdout and used the resulting error text as the commit hash.
 

@@ -59,10 +59,14 @@ constructor(
             runCatching {
                     currentCacheDir.run {
                         mkdirs()
-                        resolve(getFileNameFor(articleId)).run {
-                            createNewFile()
-                            writeText(content)
-                        }
+                        // Written aside and renamed into place, so an interrupted write cannot
+                        // leave an empty or partial file that then passes for the full article.
+                        val temp = resolve(getFileNameFor(articleId) + ".tmp")
+                        temp.writeText(content)
+                        if (!temp.renameTo(resolve(getFileNameFor(articleId)))) error("rename")
+                        // The images already cached were the previous body's (often the feed
+                        // description's), so this body's images still need prefetching.
+                        resolve(getImageMarkerFileNameFor(articleId)).delete()
                     }
                 }
                 .fold(onSuccess = { true }, onFailure = { false })
@@ -148,7 +152,9 @@ constructor(
             runCatching {
                 val file = currentCacheDir.resolve(getFileNameFor(articleId))
                 if (!file.exists()) return@withContext Result.failure(FileNotFoundException())
-                file.readText()
+                // An empty file is not an archived article: treat it as missing so the reader
+                // fetches the article instead of showing a blank page forever.
+                file.readText().ifBlank { return@withContext Result.failure(FileNotFoundException()) }
             }
         }
     }
@@ -188,7 +194,7 @@ constructor(
     suspend fun checkOrFetchFullContent(article: Article): PrefetchResult {
         return withContext(ioDispatcher) {
             try {
-                if (currentCacheDir.resolve(getFileNameFor(article.id)).exists()) {
+                if (currentCacheDir.resolve(getFileNameFor(article.id)).length() > 0) {
                     return@withContext PrefetchResult.CACHED
                 }
                 // A dead link (404, paywall, not HTML) fails identically on every sync forever.

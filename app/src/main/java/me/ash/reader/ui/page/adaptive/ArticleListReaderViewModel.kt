@@ -365,10 +365,10 @@ constructor(
                             it.copy(content = ReaderState.FullContent(content = content))
                         }
                     }
-                    .onFailure { th ->
-                        _readerState.update {
-                            it.copy(content = ReaderState.Error(th.message.toString()))
-                        }
+                    .onFailure {
+                        // Fall back to the feed's summary: the failure has no message, so an
+                        // error state showed the literal word "null" as the article body.
+                        renderDescriptionContent()
                     }
             }
         viewModelScope.launch {
@@ -391,7 +391,7 @@ constructor(
                             it.copy(content = ReaderState.FullContent(content = content))
                         }
                     }
-                    .onFailure { th ->
+                    .onFailure {
                         // Keep showing what the reader already had rather than replacing a
                         // readable article with an error because the refresh failed.
                         val cached = readerCacheHelper.readFullContent(article.id).getOrNull()
@@ -399,7 +399,7 @@ constructor(
                             it.copy(
                                 content =
                                     if (cached != null) ReaderState.FullContent(content = cached)
-                                    else ReaderState.Error(th.message.toString())
+                                    else ReaderState.Description(article.rawDescription)
                             )
                         }
                     }
