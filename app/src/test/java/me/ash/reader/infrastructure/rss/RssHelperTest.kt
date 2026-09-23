@@ -73,6 +73,17 @@ class RssHelperTest {
     }
 
     @Test
+    fun testFindThumbnailSkipsDecorativeImages() {
+        val case = """
+            <p><img src="https://s.w.org/images/core/emoji/15.0.3/72x72/2b50.png" class="wp-smiley"/> Hi</p>
+            <img src="https://example.com/spacer.gif"/>
+            <img width="1" height="1" src="https://example.com/t.png"/>
+            <img data-width="40" src="$imageUrlString"/>
+        """
+        Assert.assertEquals(imageUrlString, rssHelper.findThumbnail(case))
+    }
+
+    @Test
     fun testEnclosureNoFilenameExtension() {
         val case = """
             <enclosure url="$imageUrlString" type="image/jpeg" length="0"/>

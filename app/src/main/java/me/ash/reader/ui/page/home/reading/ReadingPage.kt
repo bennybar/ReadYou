@@ -45,7 +45,9 @@ import me.ash.reader.R
 import me.ash.reader.infrastructure.android.TextToSpeechManager
 import me.ash.reader.infrastructure.preference.LocalReadingAutoHideToolbar
 import me.ash.reader.infrastructure.preference.LocalReadingBoldCharacters
+import me.ash.reader.infrastructure.preference.LocalReadingRenderer
 import me.ash.reader.infrastructure.preference.LocalReadingTextLineHeight
+import me.ash.reader.infrastructure.preference.ReadingRendererPreference
 import me.ash.reader.infrastructure.preference.not
 import me.ash.reader.ui.ext.collectAsStateValue
 import me.ash.reader.ui.ext.showToast
@@ -200,6 +202,18 @@ fun ReadingPage(
                                 val scrollState = rememberScrollState()
 
                                 val scope = rememberCoroutineScope()
+
+                                val renderer = LocalReadingRenderer.current
+                                LaunchedEffect(articleId, content, renderer) {
+                                    val id = articleId
+                                    if (id == null || content is ReaderState.Loading) return@LaunchedEffect
+                                    when (renderer) {
+                                        ReadingRendererPreference.WebView ->
+                                            ReadingPositions.track(context, id, scrollState)
+                                        ReadingRendererPreference.NativeComponent ->
+                                            ReadingPositions.track(context, id, listState)
+                                    }
+                                }
 
                                 LaunchedEffect(bringToTop) {
                                     if (bringToTop) {

@@ -5,6 +5,9 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -39,12 +42,20 @@ class SyncHistoryLogger @Inject constructor(@ApplicationContext private val cont
     private val file = context.filesDir.resolve("sync_history.json")
     private val mutex = Mutex()
     private val json = Json { ignoreUnknownKeys = true }
+    private val latestRecord = MutableStateFlow<SyncRecord?>(null)
+
+    /** The most recent run, updated as each one is recorded. */
+    val latest: Flow<SyncRecord?> =
+        latestRecord.onStart {
+            if (latestRecord.value == null) latestRecord.compareAndSet(null, list().firstOrNull())
+        }
 
     suspend fun record(record: SyncRecord) {
         withContext(Dispatchers.IO) {
             mutex.withLock {
                 val history = (read() + record).takeLast(MAX_ENTRIES)
                 runCatching { file.writeText(json.encodeToString(history)) }
+                latestRecord.value = record
             }
         }
     }
@@ -54,7 +65,12 @@ class SyncHistoryLogger @Inject constructor(@ApplicationContext private val cont
         withContext(Dispatchers.IO) { mutex.withLock { read().reversed() } }
 
     suspend fun clear() {
-        withContext(Dispatchers.IO) { mutex.withLock { runCatching { file.delete() } } }
+        withContext(Dispatchers.IO) {
+            mutex.withLock {
+                runCatching { file.delete() }
+                latestRecord.value = null
+            }
+        }
     }
 
     private fun read(): List<SyncRecord> =

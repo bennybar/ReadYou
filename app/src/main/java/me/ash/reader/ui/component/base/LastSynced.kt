@@ -20,16 +20,24 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import me.ash.reader.R
+import me.ash.reader.domain.data.SyncHistoryLogger
 import me.ash.reader.domain.service.AccountService
 import me.ash.reader.ui.ext.collectAsStateValue
 
 @HiltViewModel
-class LastSyncedViewModel @Inject constructor(accountService: AccountService) : ViewModel() {
+class LastSyncedViewModel
+@Inject
+constructor(accountService: AccountService, syncHistoryLogger: SyncHistoryLogger) : ViewModel() {
 
     val updateAt: StateFlow<Date?> =
         accountService.currentAccountFlow
             .map { it?.updateAt }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    val lastSyncFailed: StateFlow<Boolean> =
+        syncHistoryLogger.latest
+            .map { it?.succeeded == false }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 }
 
 /**
@@ -39,6 +47,9 @@ class LastSyncedViewModel @Inject constructor(accountService: AccountService) : 
 @Composable
 fun lastSyncedDescription(viewModel: LastSyncedViewModel = hiltViewModel()): String {
     val updateAt = viewModel.updateAt.collectAsStateValue()
+    // A failed sync used to leave the last successful time on screen, the one state where
+    // "synced 5 minutes ago" actively misleads. Both pages showing this pull to refresh.
+    if (viewModel.lastSyncFailed.collectAsStateValue()) return stringResource(R.string.sync_failed)
     return lastSyncedDescription(updateAt)
 }
 

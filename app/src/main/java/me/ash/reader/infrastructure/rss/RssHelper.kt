@@ -38,6 +38,20 @@ import okio.IOException
 import org.jsoup.Jsoup
 
 val enclosureRegex = """<enclosure\s+url="([^"]+)"\s+type=".*"\s*/>""".toRegex()
+private val imgTagRegex = """<img[^>]*>""".toRegex(RegexOption.IGNORE_CASE)
+private val sizeAttributeRegex =
+    """(?<![-\w])(?:width|height)\s*=\s*["']?\s*(\d{1,6})\b""".toRegex(RegexOption.IGNORE_CASE)
+private val decorativeImageMarkers =
+    listOf(
+        "s.w.org/images/core/emoji",
+        "/wp-includes/images/smilies/",
+        "spacer.gif",
+        "blank.gif",
+        "pixel.gif",
+        "1x1.",
+        "/feed/track",
+        "feedburner",
+    )
 val imgRegex = """img.*?src=(["'])((?!data).*?)\1""".toRegex(RegexOption.DOT_MATCHES_ALL)
 
 /** Some operations on RSS. */
@@ -293,7 +307,22 @@ constructor(
         // Using negative lookahead to skip data: urls, being inline base64
         // And capturing original quote to use as ending quote
         // Base64 encoded images can be quite large - and crash database cursors
-        return imgRegex.find(text)?.groupValues?.get(2)?.takeIf { !it.startsWith("data:") }
+        //
+        // Not simply the first <img>: WordPress rewrites emoji into <img> tags from s.w.org, so an
+        // article opening with an emoji got a 72×72 ⭐ as its thumbnail. Tracking pixels and spacer
+        // GIFs fail the same way, so the first plausible content image wins.
+        return imgTagRegex.findAll(text).firstNotNullOfOrNull { tag ->
+            imgRegex.find(tag.value)?.groupValues?.get(2)?.takeIf {
+                !it.startsWith("data:") && !isDecorativeImage(it, tag.value)
+            }
+        }
+    }
+
+    private fun isDecorativeImage(url: String, tag: String): Boolean {
+        val lowercased = url.lowercase()
+        if (decorativeImageMarkers.any { lowercased.contains(it) }) return true
+        // A declared size this small cannot be a lead image. Most feeds omit it.
+        return sizeAttributeRegex.findAll(tag).any { it.groupValues[1].toInt() <= 64 }
     }
 
     suspend fun queryRssIconLink(feedLink: String?): String? {

@@ -18,6 +18,7 @@
     </plurals>
     <string name="read_later">Read later</string>
     <string name="last_synced">Last synced %1$s</string>
+    <string name="sync_failed">Sync failed — pull to retry</string>
     <string name="sync_log">Sync log</string>
     <string name="sync_log_desc">History of background syncs</string>
     <string name="sync_log_empty">No syncs recorded yet. The log fills up as background syncs run.</string>
