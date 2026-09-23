@@ -94,6 +94,16 @@ article {
     color: var(--text-color) !important;
 }
 
+/* Direction. `isolate`, never `plaintext`: plaintext re-resolves each block from its first
+   strong character and ignores the dir the page script set. The [dir] rules are !important
+   because that is the only thing that outranks a <style> block the feed itself carries. */
+article, p, li, blockquote, h1, h2, h3, h4, h5, h6, figcaption, td, th, div {
+    unicode-bidi: isolate;
+}
+
+[dir="rtl"] { direction: rtl !important; }
+[dir="ltr"] { direction: ltr !important; }
+
 /* Page  */
 body {
     margin: 0;
@@ -214,7 +224,7 @@ img + small {
 /* List */
 ul,
 ol {
-    padding-left: 0 !important;
+    padding-inline-start: 0 !important;
     line-height: var(--line-height) !important;
     letter-spacing: var(--letter-spacing) !important;
     text-align: var(--text-align) !important;
@@ -223,23 +233,23 @@ ol {
 li {
     line-height: var(--line-height) !important;
     letter-spacing: var(--letter-spacing) !important;
-    margin-left: 1.5em !important;
+    margin-inline-start: 1.5em !important;
     text-align: var(--text-align) !important;
 }
 
 /* Quote  */
 blockquote {
-    margin-left: 0.5em !important;
-    padding-left: calc(0.9em) !important;
+    margin-inline-start: 0.5em !important;
+    padding-inline-start: calc(0.9em) !important;
     background-color: var(--blockquote-bg-color) !important;
-    border-left: var(--blockquote-border-width) solid var(--blockquote-border-color) !important;
+    border-inline-start: var(--blockquote-border-width) solid var(--blockquote-border-color) !important;
     line-height: var(--line-height) !important;
     letter-spacing: var(--letter-spacing) !important;
     text-align: var(--text-align) !important;
 }
 
 blockquote blockquote {
-    margin-right: 0 !important;
+    margin-inline-end: 0 !important;
 }
 
 blockquote img {
@@ -293,6 +303,10 @@ code {
 
 pre {
     overflow: auto !important;
+    /* Code is not prose: it stays left-to-right even inside an RTL article. */
+    direction: ltr !important;
+    unicode-bidi: isolate;
+    text-align: left !important;
 }
 
 code {

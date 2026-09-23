@@ -78,6 +78,8 @@ FreshRSS reports labels as `"type": "tag"` and folders as `"type": "folder"`, an
 
   WorkManager's own tags can't answer this — a one-time sync isn't necessarily user-triggered (sync-on-start uses one-time work too), and a periodic sync can fire while the app is open — so the app tracks started activities and samples that when a sync *begins*. This is separate from upstream's *Troubleshooting* logs, which only keep stack traces of syncs that threw.
 
+- **Hebrew and Arabic read the right way round.** Direction is decided by **which script most of the text is in**, not by upstream's `Bidi.requiresBidi()` — which is true for *any* RTL character, so an English headline quoting one Hebrew word flipped entirely. Plain first-strong (`dir="auto"`) is not used either: Hebrew headlines routinely open with a Latin brand (*CISO יקר…*, *Galaxy S26 …*) and it calls those left-to-right. In the reader every paragraph, list and quote gets its own direction; publishers that hard-code `style="direction: ltr; text-align: left"` or `align="left"` onto Hebrew copy are overridden; quote bars and list markers sit on the reading side; code blocks stay left-to-right.
+
 ---
 
 ## Bugs fixed from upstream

@@ -21,7 +21,7 @@ import me.ash.reader.infrastructure.preference.LocalReadingTitleAlign
 import me.ash.reader.infrastructure.preference.LocalReadingTitleBold
 import me.ash.reader.infrastructure.preference.LocalReadingTitleUpperCase
 import me.ash.reader.ui.ext.formatAsString
-import me.ash.reader.ui.ext.requiresBidi
+import me.ash.reader.ui.ext.isRtl
 import me.ash.reader.ui.theme.applyTextDirection
 import java.util.Date
 
@@ -70,7 +70,7 @@ fun Metadata(
                         fontFamily = fontFamily,
                         fontWeight = if (titleBold.value) FontWeight.Bold else FontWeight.Medium,
                     )
-                    .applyTextDirection(requiresBidi = title.requiresBidi()),
+                    .applyTextDirection(isRtl = title.isRtl()),
             textAlign = titleAlign,
         )
         Spacer(modifier = Modifier.height(4.dp))

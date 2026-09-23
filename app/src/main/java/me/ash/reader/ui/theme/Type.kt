@@ -13,7 +13,6 @@ import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.sp
-import java.text.Bidi
 import me.ash.reader.R
 
 // TODO: Rename file to Typography.kt and add @Stable
@@ -115,15 +114,12 @@ val GoogleSansFontFamily =
     )
 
 /**
- * Resolve the text to Rtl if the text requires BiDirectional
+ * Resolve the text to Rtl if it reads right-to-left
  *
- * @see [android.view.View.TEXT_DIRECTION_ANY_RTL]
- * @see [Bidi.requiresBidi]
+ * @see [me.ash.reader.ui.ext.isRtl]
  */
-fun TextStyle.applyTextDirection(requiresBidi: Boolean) =
-    this.applyTextDirection(
-        textDirection = if (requiresBidi) TextDirection.Rtl else TextDirection.Ltr
-    )
+fun TextStyle.applyTextDirection(isRtl: Boolean) =
+    this.applyTextDirection(textDirection = if (isRtl) TextDirection.Rtl else TextDirection.Ltr)
 
 fun TextStyle.applyFontFamily(fontFamily: FontFamily) = this.merge(fontFamily = fontFamily)
 

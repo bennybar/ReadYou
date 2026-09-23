@@ -53,7 +53,7 @@ import androidx.compose.ui.unit.dp
 import java.io.InputStream
 import me.ash.reader.R
 import me.ash.reader.infrastructure.preference.LocalReadingImageMaximize
-import me.ash.reader.ui.ext.requiresBidi
+import me.ash.reader.ui.ext.isRtl
 import me.ash.reader.ui.theme.applyTextDirection
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
@@ -108,8 +108,7 @@ private fun LazyListScope.formatBody(
                         else -> it
                     }
                 }
-            val requiresBidi = paragraph.toString().requiresBidi()
-            val textStyle = bodyStyle().applyTextDirection(requiresBidi = requiresBidi)
+            val textStyle = bodyStyle().applyTextDirection(isRtl = paragraph.toString().isRtl())
             val contentWidth = LocalTextContentWidth.current
 
             Text(

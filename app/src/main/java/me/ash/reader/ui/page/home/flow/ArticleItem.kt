@@ -76,7 +76,7 @@ import me.ash.reader.ui.component.base.SIZE_1000
 import me.ash.reader.ui.component.menu.AnimatedDropdownMenu
 import me.ash.reader.ui.component.swipe.SwipeAction
 import me.ash.reader.ui.component.swipe.SwipeableActionsBox
-import me.ash.reader.ui.ext.requiresBidi
+import me.ash.reader.ui.ext.isRtl
 import me.ash.reader.ui.ext.surfaceColorAtElevation
 import me.ash.reader.ui.page.settings.color.flow.generateArticleWithFeedPreview
 import me.ash.reader.ui.theme.Shape20
@@ -234,7 +234,7 @@ fun ArticleItem(
                         color = MaterialTheme.colorScheme.onSurface,
                         style =
                             MaterialTheme.typography.titleMedium
-                                .applyTextDirection(title.requiresBidi())
+                                .applyTextDirection(title.isRtl())
                                 .merge(lineHeight = 22.sp),
                         maxLines =
                             if (articleListDesc != FlowArticleListDescPreference.NONE) 2 else 4,
@@ -261,7 +261,7 @@ fun ArticleItem(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style =
                             MaterialTheme.typography.bodySmall.applyTextDirection(
-                                shortDescription.requiresBidi()
+                                shortDescription.isRtl()
                             ),
                         maxLines =
                             when (articleListDesc) {
