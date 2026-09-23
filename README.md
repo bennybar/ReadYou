@@ -151,6 +151,8 @@ JAVA_HOME=/path/to/jdk-17 ./gradlew assembleGithubRelease
 JAVA_HOME=/path/to/jdk-17 ./gradlew testGithubDebugUnitTest
 ```
 
+To install on a phone without a cable, `./scripts/web_install.zsh` builds the signed release APK and serves it behind a throwaway Cloudflare HTTPS tunnel (`brew install cloudflared`): open the printed link on the phone and tap **Install**. `--no-build` serves the newest APK already built.
+
 Release signing reads `signature/keystore_release.properties` (`storeFile`, `storePassword`, `keyAlias`, `keyPassword`). The whole `signature/` directory is gitignored — **never commit a keystore.**
 
 ---
