@@ -9,6 +9,10 @@ import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.outlined.DeleteSweep
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -50,6 +54,7 @@ import me.ash.reader.infrastructure.preference.SortUnreadArticlesPreference
 import me.ash.reader.infrastructure.preference.SwipeEndActionPreference
 import me.ash.reader.infrastructure.preference.SwipeStartActionPreference
 import me.ash.reader.ui.component.base.DisplayText
+import me.ash.reader.ui.component.base.RYDialog
 import me.ash.reader.ui.component.base.FeedbackIconButton
 import me.ash.reader.ui.component.base.RYScaffold
 import me.ash.reader.ui.component.base.RYSwitch
@@ -59,6 +64,7 @@ import me.ash.reader.ui.component.base.Subtitle
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import me.ash.reader.ui.ext.collectAsStateValue
 import me.ash.reader.ui.ext.getBrowserAppList
+import me.ash.reader.ui.ext.showToast
 import me.ash.reader.ui.page.settings.SettingItem
 import me.ash.reader.ui.theme.palette.onLight
 
@@ -69,6 +75,8 @@ fun InteractionPage(
 ) {
     val context = LocalContext.current
     val prefetchProgress = prefetchViewModel.progress.collectAsStateValue()
+    val lastPrefetchRun = prefetchViewModel.lastRun.collectAsStateValue()
+    var clearArchiveDialogVisible by remember { mutableStateOf(false) }
     val initialPage = LocalInitialPage.current
     val initialFilter = LocalInitialFilter.current
     val swipeToStartAction = LocalArticleListSwipeStartAction.current
@@ -275,8 +283,29 @@ fun InteractionPage(
                         desc =
                             prefetchProgress?.let {
                                 stringResource(R.string.download_progress, it.current, it.total)
-                            } ?: stringResource(R.string.download_now_desc),
+                            }
+                                ?: lastPrefetchRun?.let {
+                                    if (it.interrupted)
+                                        stringResource(
+                                            R.string.download_interrupted,
+                                            it.current,
+                                            it.total,
+                                        )
+                                    else
+                                        stringResource(
+                                            R.string.download_summary,
+                                            it.ready,
+                                            it.textOnly,
+                                            it.failed,
+                                        )
+                                }
+                                ?: stringResource(R.string.download_now_desc),
                         onClick = { prefetchViewModel.downloadNow() },
+                    ) {}
+                    SettingItem(
+                        title = stringResource(R.string.clear_archive),
+                        desc = stringResource(R.string.clear_archive_desc),
+                        onClick = { clearArchiveDialogVisible = true },
                     ) {}
                     Spacer(modifier = Modifier.height(24.dp))
 
@@ -323,6 +352,36 @@ fun InteractionPage(
                 }
             }
         }
+    )
+
+    RYDialog(
+        visible = clearArchiveDialogVisible,
+        onDismissRequest = { clearArchiveDialogVisible = false },
+        icon = {
+            Icon(
+                imageVector = Icons.Outlined.DeleteSweep,
+                contentDescription = stringResource(R.string.clear_archive),
+            )
+        },
+        title = { Text(text = stringResource(R.string.clear_archive)) },
+        text = { Text(text = stringResource(R.string.clear_archive_tips)) },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    prefetchViewModel.clearArchive {
+                        clearArchiveDialogVisible = false
+                        context.showToast(context.getString(R.string.clear_archive_toast))
+                    }
+                }
+            ) {
+                Text(text = stringResource(R.string.clear))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = { clearArchiveDialogVisible = false }) {
+                Text(text = stringResource(R.string.cancel))
+            }
+        },
     )
 
     RadioDialog(

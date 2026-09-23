@@ -432,6 +432,12 @@
     <string name="download_now">Download now</string>
     <string name="download_now_desc">Fetch offline copies right away, and retry articles that failed before</string>
     <string name="download_progress">Downloading %1$d of %2$d…</string>
+    <string name="download_summary">%1$d ready offline · %2$d text only · %3$d failed</string>
+    <string name="download_interrupted">Stopped at %1$d of %2$d. Tap to continue</string>
+    <string name="clear_archive">Clear offline archive</string>
+    <string name="clear_archive_desc">Delete downloaded articles, images and their search index</string>
+    <string name="clear_archive_tips">All offline copies of articles and their images will be deleted from this device, and search will only find titles until they are downloaded again. Your articles, stars and Read Later are kept.</string>
+    <string name="clear_archive_toast">Offline archive cleared</string>
     <string name="image_cache_size_percent">%1$d%% of free storage</string>
     <string name="enable">Enable</string>
     <string name="disable">Disable</string>

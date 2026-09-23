@@ -14,6 +14,10 @@ interface ArticleFtsDao {
     @Query("DELETE FROM article_fts WHERE articleId = :articleId")
     suspend fun deleteByArticleId(articleId: String)
 
+    /** Article ids are `accountId$remoteId`, so [idPrefix] is `"<accountId>$"`. */
+    @Query("DELETE FROM article_fts WHERE substr(articleId, 1, length(:idPrefix)) = :idPrefix")
+    suspend fun deleteByAccount(idPrefix: String)
+
     // FTS4 tables cannot carry a unique constraint, so replace by hand.
     @Transaction
     suspend fun upsert(articleId: String, content: String) {

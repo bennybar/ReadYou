@@ -79,7 +79,7 @@ constructor(
             }
             .getOrDefault(0)
 
-    private fun recordFailure(articleId: String) {
+    fun recordFailure(articleId: String) {
         runCatching {
             val count = failureCountFor(articleId) + 1
             currentCacheDir.run {

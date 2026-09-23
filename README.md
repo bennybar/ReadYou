@@ -36,7 +36,9 @@ The default reader is a **WebView**, which has its own network stack and ignores
 
 Prefetch is **incremental**: once an article's full text is cached, its images are downloaded and it is indexed for search, later syncs skip it entirely — no disk read, no HTML re-parse, no image requests. A steady-state sync costs about a second. (Upstream had no image prefetch at all; an earlier build of this fork re-scanned every article on every sync, which on a large archive was a real battery drain.)
 
-There is also a **Download now** button with live progress (*"Downloading 12 of 340…"*), which deliberately retries links that were previously written off as dead.
+There is also a **Download now** button with live progress (*"Downloading 12 of 340…"*), which deliberately retries links that were previously written off as dead. When a run ends it stays summarised as *"320 ready offline · 15 text only · 5 failed"* — text only meaning readable but with images missing — or *"Stopped at 120 of 340"* if the system or a lost Wi-Fi connection cut it short. **Clear offline archive** deletes the downloaded text, the images and the search index built from them, so search does not keep finding articles whose text is gone.
+
+Each article is finished — text, search index, images — before the downloader takes another, two at a time, and each has **60 seconds** as a whole. A per-read network timeout is not enough: a host that trickles bytes never trips it, and with only two workers, two such articles stopped the downloader entirely.
 
 ## The same story, collapsed
 
