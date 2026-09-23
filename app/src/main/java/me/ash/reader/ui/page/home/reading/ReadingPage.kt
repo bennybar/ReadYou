@@ -73,6 +73,7 @@ fun ReadingPage(
     val hapticFeedback = LocalHapticFeedback.current
     val readingUiState = viewModel.readingUiState.collectAsStateValue()
     val readerState = viewModel.readerStateStateFlow.collectAsStateValue()
+    val isRefetchingOnOpen = viewModel.isRefetchingOnOpen.collectAsStateValue()
     val boldCharacters = LocalReadingBoldCharacters.current
     val coroutineScope = rememberCoroutineScope()
 
@@ -204,9 +205,17 @@ fun ReadingPage(
                                 val scope = rememberCoroutineScope()
 
                                 val renderer = LocalReadingRenderer.current
-                                LaunchedEffect(articleId, content, renderer) {
+                                // Not while the fresh copy is still on its way: the copy on screen
+                                // may be the shorter feed text, and saving a position clamped to it
+                                // would overwrite the real one.
+                                LaunchedEffect(articleId, content, renderer, isRefetchingOnOpen) {
                                     val id = articleId
-                                    if (id == null || content is ReaderState.Loading) return@LaunchedEffect
+                                    if (
+                                        id == null ||
+                                            content is ReaderState.Loading ||
+                                            isRefetchingOnOpen
+                                    )
+                                        return@LaunchedEffect
                                     when (renderer) {
                                         ReadingRendererPreference.WebView ->
                                             ReadingPositions.track(context, id, scrollState)

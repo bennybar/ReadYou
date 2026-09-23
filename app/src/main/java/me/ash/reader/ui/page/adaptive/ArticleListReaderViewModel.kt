@@ -13,6 +13,7 @@ import kotlin.collections.any
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -320,6 +321,7 @@ constructor(
                         .prefetchArticleId()
                         .renderContent(this)
                 }
+                refetchOnOpen(article)
             }
         }
     }
@@ -330,24 +332,45 @@ constructor(
         _readerState.update { ReaderState() }
     }
 
+    /** Whatever is on hand straight away; [refetchOnOpen] then replaces it with a fresh copy. */
     suspend fun ReaderState.renderContent(articleWithFeed: ArticleWithFeed): ReaderState {
-        val isFullContent =
-            settingsProvider.settings.fullContentAllFeeds.value || articleWithFeed.feed.isFullContent
-        val contentState =
-            if (isFullContent) {
-                val fullContent =
-                    readerCacheHelper.readFullContent(articleWithFeed.article.id).getOrNull()
-                if (fullContent != null) ReaderState.FullContent(fullContent)
-                else {
-                    renderFullContent()
-                    ReaderState.Loading
-                }
-            } else ReaderState.Description(articleWithFeed.article.rawDescription)
+        val cached = readerCacheHelper.readFullContent(articleWithFeed.article.id).getOrNull()
+        return copy(
+            content =
+                if (cached != null) ReaderState.FullContent(cached)
+                else ReaderState.Description(articleWithFeed.article.rawDescription)
+        )
+    }
 
-        return copy(content = contentState)
+    private var refetchOnOpenJob: Job? = null
+    private val _isRefetchingOnOpen = MutableStateFlow(false)
+    /** True while the article just opened is being re-downloaded behind what is on screen. */
+    val isRefetchingOnOpen: StateFlow<Boolean> = _isRefetchingOnOpen
+
+    /**
+     * Opening an article re-downloads it from its site, as pulling down does, whatever the feed
+     * settings: the cached or feed copy stays on screen meanwhile, and a failure keeps it.
+     */
+    private fun refetchOnOpen(article: Article) {
+        refetchOnOpenJob?.cancel()
+        _isRefetchingOnOpen.value = true
+        val job =
+            viewModelScope.launch {
+                readerCacheHelper.refetchFullContent(article).onSuccess { content ->
+                    // The reader can have moved on to another article while this was in flight.
+                    _readerState.update {
+                        if (it.articleId == article.id)
+                            it.copy(content = ReaderState.FullContent(content))
+                        else it
+                    }
+                }
+            }
+        refetchOnOpenJob = job
+        job.invokeOnCompletion { if (refetchOnOpenJob === job) _isRefetchingOnOpen.value = false }
     }
 
     fun renderDescriptionContent() {
+        refetchOnOpenJob?.cancel()
         _readerState.update {
             it.copy(
                 content = ReaderState.Description(content = currentArticle?.rawDescription ?: "")
@@ -356,6 +379,7 @@ constructor(
     }
 
     fun renderFullContent() {
+        refetchOnOpenJob?.cancel()
         val fetchJob =
             viewModelScope.launch {
                 readerCacheHelper
@@ -382,6 +406,7 @@ constructor(
     /** Pull-to-refresh in the reader: re-download the article from its source, ignoring the cache. */
     fun refreshFullContent() {
         val article = currentArticle ?: return
+        refetchOnOpenJob?.cancel()
         val fetchJob =
             viewModelScope.launch {
                 readerCacheHelper
