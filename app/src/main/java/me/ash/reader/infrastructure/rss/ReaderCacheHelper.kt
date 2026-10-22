@@ -171,6 +171,12 @@ constructor(
         }
     }
 
+    /** Bytes the saved article texts take on disk, for the account in use. */
+    suspend fun archiveBytes(): Long =
+        withContext(ioDispatcher) {
+            currentCacheDir.listFiles()?.sumOf { it.length() } ?: 0L
+        }
+
     /** File checks only: no reading the article, no network. */
     suspend fun offlineState(articleId: String): OfflineState {
         return withContext(ioDispatcher) {

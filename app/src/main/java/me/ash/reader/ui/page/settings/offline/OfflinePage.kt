@@ -1,5 +1,20 @@
 package me.ash.reader.ui.page.settings.offline
 
+import me.ash.reader.infrastructure.preference.LocalExpressiveStyle
+import me.ash.reader.domain.data.PrefetchSummary
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.Alignment
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.material3.Surface
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.Button
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.height
@@ -59,6 +74,10 @@ fun OfflinePage(onBack: () -> Unit, prefetchViewModel: PrefetchViewModel = hiltV
     val scope = rememberCoroutineScope()
     val prefetchProgress = prefetchViewModel.progress.collectAsStateValue()
     val lastPrefetchRun = prefetchViewModel.lastRun.collectAsStateValue()
+    val usage = prefetchViewModel.usage.collectAsStateValue()
+    val expressive = LocalExpressiveStyle.current.value
+    // A run that just ended changed what is on disk.
+    LaunchedEffect(prefetchProgress == null) { prefetchViewModel.refreshUsage() }
     val fullContentAllFeeds = LocalFullContentAllFeeds.current
     val prefetchImages = LocalPrefetchImages.current
     val prefetchScope = LocalPrefetchScope.current
@@ -89,6 +108,17 @@ fun OfflinePage(onBack: () -> Unit, prefetchViewModel: PrefetchViewModel = hiltV
             LazyColumn {
                 item {
                     DisplayText(text = stringResource(R.string.offline), desc = "")
+                    if (expressive) {
+                        ArchiveCard(
+                            usage = usage,
+                            progress = prefetchProgress,
+                            lastRun = lastPrefetchRun,
+                            onDownload = {
+                                if (prefetchProgress != null) prefetchViewModel.stop()
+                                else prefetchViewModel.downloadNow()
+                            },
+                        )
+                    }
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Subtitle(
@@ -123,7 +153,7 @@ fun OfflinePage(onBack: () -> Unit, prefetchViewModel: PrefetchViewModel = hiltV
                         desc = imageCacheSize.toDesc(context),
                         onClick = { imageCacheSizeDialogVisible = true },
                     ) {}
-                    SettingItem(
+                    if (!expressive) SettingItem(
                         title = stringResource(R.string.download_now),
                         desc =
                             prefetchProgress?.let {
@@ -288,4 +318,111 @@ fun OfflinePage(onBack: () -> Unit, prefetchViewModel: PrefetchViewModel = hiltV
     ) {
         readHistoryDialogVisible = false
     }
+}
+
+/**
+ * The expressive style's archive summary: how much of the image archive is used, how the last
+ * download went (or how far the current one is), and Download now / Stop.
+ */
+@Composable
+private fun ArchiveCard(
+    usage: PrefetchViewModel.ArchiveUsage?,
+    progress: PrefetchSummary?,
+    lastRun: PrefetchSummary?,
+    onDownload: () -> Unit,
+) {
+    val colors = MaterialTheme.colorScheme
+    Surface(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        shape = RoundedCornerShape(32.dp),
+        color = colors.primaryContainer,
+        contentColor = colors.onPrimaryContainer,
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(
+                    text = stringResource(R.string.offline_archive),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f),
+                )
+                if (usage != null && usage.imageMaxBytes > 0) {
+                    Text(
+                        text =
+                            stringResource(
+                                R.string.archive_used_of,
+                                binarySize(usage.imageBytes),
+                                binarySize(usage.imageMaxBytes),
+                            ),
+                        style = MaterialTheme.typography.titleSmall,
+                    )
+                }
+            }
+            if (usage != null && usage.imageMaxBytes > 0) {
+                LinearProgressIndicator(
+                    progress = { (usage.imageBytes.toFloat() / usage.imageMaxBytes).coerceIn(0f, 1f) },
+                    modifier = Modifier.fillMaxWidth().height(12.dp),
+                    color = colors.primary,
+                    trackColor = colors.surface,
+                    gapSize = 4.dp,
+                    drawStopIndicator = {},
+                )
+                Text(
+                    text =
+                        stringResource(
+                            R.string.archive_text_size,
+                            binarySize(usage.textBytes),
+                        ),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            val status =
+                progress?.let { stringResource(R.string.download_progress, it.current, it.total) }
+                    ?: lastRun?.let {
+                        if (it.interrupted)
+                            stringResource(R.string.download_interrupted, it.current, it.total)
+                        else stringResource(R.string.download_summary, it.ready, it.textOnly, it.failed)
+                    }
+            if (status != null) {
+                Text(
+                    text = status,
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier =
+                        Modifier.clip(RoundedCornerShape(12.dp))
+                            .background(colors.surface)
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                    color = colors.onSurface,
+                )
+            }
+            Button(
+                onClick = onDownload,
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+            ) {
+                Text(
+                    text =
+                        stringResource(if (progress != null) R.string.stop else R.string.download_now),
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Sizes in units of 1024, as the image cache size is set: Android's formatter counts in 1000s and
+ * would show the 2 GB setting as "2.1 GB".
+ */
+private fun binarySize(bytes: Long): String {
+    val units = listOf("B", "KB", "MB", "GB", "TB")
+    var value = bytes.toDouble()
+    var unit = 0
+    while (value >= 1024 && unit < units.lastIndex) {
+        value /= 1024
+        unit++
+    }
+    return if (unit == 0 || value >= 10) "%.0f %s".format(value, units[unit])
+    else "%.1f %s".format(value, units[unit]).replace(".0 ", " ")
 }

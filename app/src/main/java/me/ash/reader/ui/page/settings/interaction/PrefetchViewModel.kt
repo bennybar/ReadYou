@@ -1,5 +1,6 @@
 package me.ash.reader.ui.page.settings.interaction
 
+import kotlinx.coroutines.flow.MutableStateFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkInfo
@@ -45,6 +46,28 @@ constructor(
             }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
+    /** What the offline archive takes on disk, for the expressive storage card. */
+    data class ArchiveUsage(val imageBytes: Long, val imageMaxBytes: Long, val textBytes: Long)
+
+    private val _usage = MutableStateFlow<ArchiveUsage?>(null)
+    val usage: StateFlow<ArchiveUsage?> = _usage
+
+    init {
+        refreshUsage()
+    }
+
+    fun refreshUsage() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val disk = imageLoader.diskCache
+            _usage.value =
+                ArchiveUsage(
+                    imageBytes = disk?.size ?: 0L,
+                    imageMaxBytes = disk?.maxSize ?: 0L,
+                    textBytes = cacheHelper.archiveBytes(),
+                )
+        }
+    }
+
     /** The last run that stopped, finished or not; kept after the worker is gone. */
     val lastRun: StateFlow<PrefetchSummary?> = summaryStore.last
 
@@ -77,6 +100,7 @@ constructor(
             // their own feed text.
             articleIndexer.indexNewArticles(accountId) { null }
             summaryStore.save(null)
+            refreshUsage()
             launch(Dispatchers.Main) { onDone() }
         }
     }

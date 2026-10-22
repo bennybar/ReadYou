@@ -462,6 +462,10 @@
     <string name="expressive_style">Expressive style</string>
     <string name="expressive_style_desc">Material 3 Expressive: bolder type, tonal cards, floating toolbars</string>
     <string name="offline_sync_section">Syncing</string>
+    <string name="stop">Stop</string>
+    <string name="offline_archive">Offline archive</string>
+    <string name="archive_used_of">%1$s of %2$s</string>
+    <string name="archive_text_size">Saved article text: %1$s</string>
     <string name="offline_desc">Downloads, image archive, search</string>
     <string name="download_progress_stop">Downloading %1$d of %2$d… Tap to stop</string>
     <string name="available_offline">Available offline</string>
