@@ -11,6 +11,10 @@
 
 ReadYou Reloaded is based on [ReadYou](https://github.com/ReadYouApp/ReadYou), the Material You RSS reader. It keeps everything ReadYou does, and is built around one goal: **the whole feed is on the device, images and all, and every word of it is searchable**, with no regard for how much storage or bandwidth that costs.
 
+### Why this fork
+
+ReadYou has felt close to abandoned over the last few months: its last release was 0.16.2 in June 2026, its last change landed in August, and around 480 issues are open. It was also missing features I wanted every day, above all real offline reading, search beyond titles, and right-to-left text that reads correctly. So this fork adds them, and keeps going.
+
 **Download:** [latest release](https://github.com/bennybar/readyou/releases/latest). It installs alongside ReadYou (different application id), so you can keep both.
 
 ## At a glance
