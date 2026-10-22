@@ -28,6 +28,7 @@ ReadYou has felt close to abandoned over the last few months: its last release w
 - **The reader remembers where you stopped**, in each of the last 300 articles.
 - **You can see whether background sync works**: a sync log, a "Sync failed" label, and a one-tap battery exemption.
 - **Unread count on the app icon**, where the launcher supports it.
+- **What's new** after each update: a sheet of what changed since the version you had, once, and the full list in *Settings → What's new*.
 - **Material 3 Expressive look** (*Settings → Color & style → Expressive style*, on by default): bolder headers, tonal filter cards with their counts on the home screen, and a floating filter toolbar. Turn it off for the original ReadYou screens.
 
 Everything below is what differs from ReadYou.

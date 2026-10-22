@@ -453,6 +453,11 @@
         <item quantity="other">From the last %d months</item>
     </plurals>
     <string name="offline">Offline</string>
+    <string name="whats_new">What\'s new</string>
+    <string name="whats_new_desc">What changed in each release</string>
+    <string name="whats_new_in">What\'s new in %1$s</string>
+    <string name="whats_new_all">All changes</string>
+    <string name="got_it">Got it</string>
     <string name="expressive_style">Expressive style</string>
     <string name="expressive_style_desc">Material 3 Expressive: bolder type, tonal cards, floating toolbars</string>
     <string name="offline_sync_section">Syncing</string>

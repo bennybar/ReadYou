@@ -63,6 +63,8 @@ sealed interface Route : NavKey {
 
     @Serializable data object Offline : Route
 
+    @Serializable data object WhatsNew : Route
+
     // Troubleshooting
     @Serializable data object Troubleshooting : Route
 

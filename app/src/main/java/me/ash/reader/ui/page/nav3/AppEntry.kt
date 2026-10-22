@@ -53,6 +53,7 @@ import me.ash.reader.ui.page.settings.tips.LicenseListPage
 import me.ash.reader.ui.page.settings.tips.TipsAndSupportPage
 import me.ash.reader.ui.page.settings.synclog.SyncLogPage
 import me.ash.reader.ui.page.settings.offline.OfflinePage
+import me.ash.reader.ui.page.settings.whatsnew.WhatsNewPage
 import me.ash.reader.ui.page.settings.troubleshooting.TroubleshootingPage
 import me.ash.reader.ui.page.startup.StartupPage
 
@@ -119,6 +120,7 @@ fun AppEntry(backStack: NavBackStack<NavKey>) {
                                 animatedVisibilityScope = LocalNavAnimatedContentScope.current,
                                 navigateToSettings = { backStack.add(Route.Settings) },
                                 navigationToFlow = { backStack.add(Route.Reading(null)) },
+                                navigateToWhatsNew = { backStack.add(Route.WhatsNew) },
                                 navigateToAccountList = { backStack.add(Route.Accounts) },
                                 navigateToAccountDetail = {
                                     backStack.add(Route.AccountDetails(it))
@@ -188,6 +190,7 @@ fun AppEntry(backStack: NavBackStack<NavKey>) {
                                 navigateToLanguages = { backStack.add(Route.Languages) },
                                 navigateToSyncLog = { backStack.add(Route.SyncLog) },
                                 navigateToOffline = { backStack.add(Route.Offline) },
+                                navigateToWhatsNew = { backStack.add(Route.WhatsNew) },
                                 navigateToTroubleshooting = {
                                     backStack.add(Route.Troubleshooting)
                                 },
@@ -270,6 +273,7 @@ fun AppEntry(backStack: NavBackStack<NavKey>) {
                     Route.Languages -> NavEntry(key) { LanguagesPage(onBack = onBack) }
                     Route.SyncLog -> NavEntry(key) { SyncLogPage(onBack = onBack) }
                     Route.Offline -> NavEntry(key) { OfflinePage(onBack = onBack) }
+                    Route.WhatsNew -> NavEntry(key) { WhatsNewPage(onBack = onBack) }
                     Route.Troubleshooting -> NavEntry(key) { TroubleshootingPage(onBack = onBack) }
                     Route.TipsAndSupport ->
                         NavEntry(key) {

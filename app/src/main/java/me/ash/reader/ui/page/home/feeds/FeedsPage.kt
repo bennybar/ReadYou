@@ -1,5 +1,6 @@
 package me.ash.reader.ui.page.home.feeds
 
+import me.ash.reader.ui.page.settings.whatsnew.WhatsNewSheet
 import me.ash.reader.infrastructure.preference.LocalExpressiveStyle
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibilityScope
@@ -100,6 +101,7 @@ fun FeedsPage(
     subscribeViewModel: SubscribeViewModel = hiltViewModel(),
     navigateToSettings: () -> Unit,
     navigationToFlow: () -> Unit,
+    navigateToWhatsNew: () -> Unit = {},
     navigateToAccountList: () -> Unit,
     navigateToAccountDetail: (Int) -> Unit,
 ) {
@@ -377,6 +379,8 @@ fun FeedsPage(
     FeedOptionDrawer(drawerState = feedDrawerState)
 
     val currentAccountId = feedsUiState.account?.id
+
+    WhatsNewSheet(onShowAll = navigateToWhatsNew)
 
     AccountsTab(
         visible = accountTabVisible,
