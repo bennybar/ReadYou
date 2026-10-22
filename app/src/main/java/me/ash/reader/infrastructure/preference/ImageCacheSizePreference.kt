@@ -14,12 +14,18 @@ import me.ash.reader.ui.ext.put
 val LocalImageCacheSize =
     compositionLocalOf<ImageCacheSizePreference> { ImageCacheSizePreference.default }
 
-// Percentage of available disk space Coil may use for its image cache.
+// Gigabytes the offline image archive may use. An absolute size, because Coil clamps a percentage
+// of the disk to 250 MB, which a large archive outgrows quickly. The stored numbers 2/5/10/25 used
+// to be percentages and now read as gigabytes.
 sealed class ImageCacheSizePreference(val value: Int) : Preference() {
-    object Percent2 : ImageCacheSizePreference(2)
-    object Percent5 : ImageCacheSizePreference(5)
-    object Percent10 : ImageCacheSizePreference(10)
-    object Percent25 : ImageCacheSizePreference(25)
+    object Gb1 : ImageCacheSizePreference(1)
+    object Gb2 : ImageCacheSizePreference(2)
+    object Gb5 : ImageCacheSizePreference(5)
+    object Gb10 : ImageCacheSizePreference(10)
+    object Gb25 : ImageCacheSizePreference(25)
+
+    val bytes: Long
+        get() = value * 1024L * 1024 * 1024
 
     override fun put(context: Context, scope: CoroutineScope) {
         scope.launch {
@@ -31,19 +37,20 @@ sealed class ImageCacheSizePreference(val value: Int) : Preference() {
     }
 
     fun toDesc(context: Context): String =
-        context.getString(R.string.image_cache_size_percent, value)
+        context.getString(R.string.image_cache_size_gb, value)
 
     companion object {
 
-        val default = Percent2
-        val values = listOf(Percent2, Percent5, Percent10, Percent25)
+        val default = Gb2
+        val values = listOf(Gb1, Gb2, Gb5, Gb10, Gb25)
 
         fun fromPreferences(preferences: Preferences) =
             when (preferences[DataStoreKey.keys[imageCacheSize]?.key as Preferences.Key<Int>]) {
-                2 -> Percent2
-                5 -> Percent5
-                10 -> Percent10
-                25 -> Percent25
+                1 -> Gb1
+                2 -> Gb2
+                5 -> Gb5
+                10 -> Gb10
+                25 -> Gb25
                 else -> default
             }
     }

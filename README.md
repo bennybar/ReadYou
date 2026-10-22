@@ -40,7 +40,7 @@ Everything below is what differs from ReadYou.
 | Full content | per-feed toggle only | **one global switch** for all feeds |
 | Images | never prefetched, so a "prefetched" article still had broken images offline | **downloaded during sync** and served back to the reader from cache |
 | What's kept | unread articles only, so an article lost its offline copy the moment you read it | **unread / unread + starred / all articles**, plus Read Later always |
-| Image cache | hardcoded to 2% of disk | **selectable, up to 25%** |
+| Image archive | hardcoded to 2% of disk, and capped at 250 MB by the image library | **1 / 2 / 5 / 10 / 25 GB** |
 
 **The archive lives in `filesDir`, not the cache.** ReadYou kept the extracted article text and the image cache under `cacheDir`, which is exactly the directory Android is free to delete under storage pressure, and which "Clear cache" wipes in one tap. Worse, the search index lives in the database and survives that, so an evicted cache left search returning articles whose text no longer existed on the device. An existing archive is migrated out of the cache on first launch.
 
@@ -48,9 +48,9 @@ The default reader is a **WebView**, which has its own network stack and ignores
 
 **Each article is finished before the next one starts**: text, search index, then images, two at a time, and each article has **60 seconds** in total. A per-read network timeout is not enough: a host that trickles bytes never trips it, and with only two workers, two such articles would stop the downloader entirely. Read Later articles go first.
 
-Prefetch is **incremental**: once an article's text is cached, its images are downloaded and it is indexed, later syncs skip it entirely, with no disk read, no HTML re-parse and no image requests. A steady-state sync costs about a second.
+Prefetch is **incremental**: once an article's text is cached, its images are downloaded and it is indexed, later syncs only check that its images are still in the cache (a file lookup per image, no HTML re-parse, no network). An image the cache has evicted since is downloaded again. Every image of an article is attempted, so one dead tracking pixel does not stop the rest. The after-sync run and **Download now** never run at the same time; the second waits for the first.
 
-**Download now** shows live progress (*"Downloading 12 of 340…"*) and retries links previously written off as dead. When a run ends it stays summarised as *"320 ready offline · 15 text only · 5 failed"* (text only means readable but with images missing), or *"Stopped at 120 of 340"* if the system or a lost Wi-Fi connection cut it short. **Clear offline archive** deletes the downloaded text, the images and the search index built from them, so search does not keep finding articles whose text is gone.
+**Download now** starts straight away on any network, and shows live progress (*"Downloading 12 of 340…"*) and retries links previously written off as dead. When a run ends it stays summarised as *"320 ready offline · 15 text only · 5 failed"* (text only means readable but with images missing), or *"Stopped at 120 of 340"* if the system or a lost Wi-Fi connection cut it short. **Clear offline archive** deletes the downloaded text, the images and the search index built from them, so search does not keep finding articles whose text is gone.
 
 ## Full-text search
 
@@ -119,7 +119,7 @@ FreshRSS reports labels as `"type": "tag"` and folders as `"type": "folder"`, an
 These are real defects in ReadYou, not preferences.
 
 - **Bot-protection pages were cached as articles.** Full-text extraction identified itself as `ReadYou/x.y.z`. Radware's bot manager bounces an unknown agent to a challenge page that answers with a normal **HTTP 200 full of real text**, so *"your activity made us think that you are a bot"* was extracted, cached and shown in the article's place. Article pages are now fetched with a **browser User-Agent**, and a fetch redirected off the article's own host is treated as a failure.
-- **Prefetch ignored your network settings.** The heaviest network job in the app was queued with **no constraints**, so it ran on cellular even with *sync only on Wi-Fi* enabled. It now inherits the account's Wi-Fi and charging constraints.
+- **Prefetch ignored your network settings.** The heaviest network job in the app was queued with **no constraints**, so it ran on cellular even with *sync only on Wi-Fi* enabled. The after-sync run now inherits the account's Wi-Fi and charging constraints.
 - **One dead link could retry forever.** A single 404 or paywalled article made the whole prefetch batch `retry()` indefinitely, which also **permanently stalled the widget update** chained after it. Failures are now recorded per article and written off after 3 attempts.
 - **The cache could return the wrong article's content.** `ReaderCacheHelper` shared one `MessageDigest` across concurrent coroutines, and interleaved `update()` calls can produce a wrong hash, so an article could read *another article's* cached body.
 - **The same photo could be shown twice, stacked.** Sites emit one copy of an image for desktop and another for mobile and let CSS hide one. Readability throws the stylesheets away, so both survived. Repeats of an image already shown are now dropped during extraction.
@@ -139,13 +139,13 @@ New settings live under **Settings → Interaction**:
 - *Full content for all feeds*
 - *Prefetch images*
 - *What to keep offline*: unread / unread + starred / all articles
-- *Image cache size*: 2% / 5% / 10% / 25% of free storage
+- *Image cache size*: 1 / 2 / 5 / 10 / 25 GB (takes effect the next time the app starts)
 - *Download now*, with live progress and a summary of the last run
 - *Clear offline archive*
 - *Remove read articles immediately*
 - *Unread count on the app icon*
 
-And **Settings → Sync log** for the sync history. With a large phone, **All articles** + **25%** is the intended configuration.
+And **Settings → Sync log** for the sync history. With a large phone, **All articles** + **25 GB** is the intended configuration.
 
 ## Things worth knowing
 

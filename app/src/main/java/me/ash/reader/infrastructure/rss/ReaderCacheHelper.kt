@@ -110,33 +110,46 @@ constructor(
     }
 
     /**
-     * Whether this article's images have already been pulled into the image cache.
+     * The images this article's prefetch cached, or null while they still need fetching.
      *
      * Without this the prefetcher re-read every article off disk, re-parsed its HTML and re-issued
      * every image request on every single sync, forever — which for an archive of a few thousand
-     * articles is a genuine drain on the battery for no benefit at all.
+     * articles is a genuine drain on the battery for no benefit at all. The URLs are kept so a
+     * later run can check, with a file lookup, that the cache has not evicted them since.
+     *
+     * An article written off after repeated failures counts as done, with nothing to check. A
+     * marker from before the URLs were recorded counts as not done, so it is checked once.
      */
-    suspend fun hasPrefetchedImages(articleId: String): Boolean {
+    suspend fun prefetchedImageUrls(articleId: String): List<String>? {
         return withContext(ioDispatcher) {
-            val attempts =
+            val lines =
                 runCatching {
                         currentCacheDir
                             .resolve(getImageMarkerFileNameFor(articleId))
-                            .readText()
-                            .trim()
+                            .readLines()
+                            .map { it.trim() }
+                            .filter { it.isNotEmpty() }
                     }
-                    .getOrDefault("")
-            attempts == DONE || (attempts.toIntOrNull() ?: 0) >= MAX_FETCH_ATTEMPTS
+                    .getOrDefault(emptyList())
+            val head = lines.firstOrNull()
+            when {
+                head == DONE_WITH_URLS -> lines.drop(1)
+                (head?.toIntOrNull() ?: 0) >= MAX_FETCH_ATTEMPTS -> emptyList()
+                else -> null
+            }
         }
     }
 
-    /** [success] is false when an image could not be downloaded, so it is worth trying again. */
-    suspend fun recordImagePrefetch(articleId: String, success: Boolean) {
+    /**
+     * [urls] are the images now in the cache, or null when one could not be downloaded, so it is
+     * worth trying again.
+     */
+    suspend fun recordImagePrefetch(articleId: String, urls: List<String>?) {
         withContext(ioDispatcher) {
             runCatching {
                 val marker = currentCacheDir.resolve(getImageMarkerFileNameFor(articleId))
                 val contents =
-                    if (success) DONE
+                    if (urls != null) (listOf(DONE_WITH_URLS) + urls).joinToString("\n")
                     else {
                         val attempts =
                             (marker.takeIf { it.exists() }?.readText()?.trim()?.toIntOrNull() ?: 0)
@@ -245,6 +258,7 @@ constructor(
 
     companion object {
         private const val MAX_FETCH_ATTEMPTS = 3
-        private const val DONE = "done"
+        // Plain "done" was the marker before the image URLs were recorded with it.
+        private const val DONE_WITH_URLS = "done:urls"
     }
 }

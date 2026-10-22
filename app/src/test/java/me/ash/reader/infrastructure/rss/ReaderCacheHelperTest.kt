@@ -11,6 +11,7 @@ import me.ash.reader.domain.service.AccountService
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -70,14 +71,25 @@ class ReaderCacheHelperTest {
     }
 
     @Test
+    fun imageMarkerKeepsTheUrlsAndOldMarkersAreRechecked() = runBlocking {
+        helper.recordImagePrefetch(article.id, urls = null)
+        assertNull(helper.prefetchedImageUrls(article.id))
+        helper.recordImagePrefetch(article.id, urls = listOf("https://e.com/1.png", "https://e.com/2.png"))
+        assertEquals(2, helper.prefetchedImageUrls(article.id)?.size)
+        // A marker from before the URLs were kept says only "done", so it is checked once more.
+        cachedFile(".img").writeText("done")
+        assertNull(helper.prefetchedImageUrls(article.id))
+    }
+
+    @Test
     fun newBodyClearsTheImageMarker() = runBlocking {
-        helper.recordImagePrefetch(article.id, success = true)
-        assertTrue(helper.hasPrefetchedImages(article.id))
+        helper.recordImagePrefetch(article.id, urls = listOf("https://example.com/a.jpg"))
+        assertEquals(listOf("https://example.com/a.jpg"), helper.prefetchedImageUrls(article.id))
 
         whenever(rssHelper.parseFullContent(any(), any())) doReturn "<p>full</p>"
         helper.refetchFullContent(article)
 
-        assertFalse(helper.hasPrefetchedImages(article.id))
+        assertNull(helper.prefetchedImageUrls(article.id))
         assertFalse(accountDir().listFiles()!!.any { it.name.endsWith(".tmp") })
     }
 }

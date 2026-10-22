@@ -21,7 +21,9 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -48,7 +50,12 @@ constructor(
     private val prefetchSummaryStore: PrefetchSummary.Store,
 ) : CoroutineWorker(context, workerParams) {
 
-    override suspend fun doWork(): Result {
+    // The after-sync run and "Download now" are separate unique works, so both could run at once,
+    // fetching everything twice and writing the same files. The second waits for the first, then
+    // finds almost everything already done.
+    override suspend fun doWork(): Result = runLock.withLock { downloadAll() }
+
+    private suspend fun downloadAll(): Result {
         val settings = applicationContext.dataStore.data.first().toSettings()
         val fullContentAllFeeds = settings.fullContentAllFeeds.value
         val prefetchImages = settings.prefetchImages.value
@@ -156,7 +163,13 @@ constructor(
 
         // A full text fetched just now was indexed when it was saved.
         val needsIndexing = !alreadyIndexed
-        val needsImages = prefetchImages && !cacheHelper.hasPrefetchedImages(article.id)
+        // Images can be evicted from the cache after they were marked done; checking that they
+        // are still there is a file lookup per image, with no network and no HTML parse.
+        val needsImages =
+            prefetchImages &&
+                cacheHelper.prefetchedImageUrls(article.id).let { urls ->
+                    urls == null || urls.any { !isImageCached(it) }
+                }
 
         // An article that is already indexed and whose images are already cached costs nothing
         // on later runs: no disk read, no HTML parse, no image requests.
@@ -165,8 +178,9 @@ constructor(
             val html = cacheHelper.readFullContent(article.id).getOrNull() ?: article.rawDescription
             if (needsIndexing) articleIndexer.index(article, html)
             if (needsImages) {
-                imagesCached = prefetchImagesFor(article, html)
-                cacheHelper.recordImagePrefetch(articleId = article.id, success = imagesCached)
+                val cachedUrls = prefetchImagesFor(article, html)
+                imagesCached = cachedUrls != null
+                cacheHelper.recordImagePrefetch(articleId = article.id, urls = cachedUrls)
             }
         }
 
@@ -185,9 +199,12 @@ constructor(
             .flatMap { articleFtsDao.queryIndexedIds(it) }
             .toSet()
 
-    /** @return true when every image was cached, so the article never has to be scanned again. */
-    private suspend fun prefetchImagesFor(article: Article, html: String): Boolean {
-        if (html.isBlank()) return true
+    private fun isImageCached(url: String): Boolean =
+        imageLoader.diskCache?.openSnapshot(url)?.use { true } ?: false
+
+    /** @return the article's image URLs when every one is cached, or null when one failed. */
+    private suspend fun prefetchImagesFor(article: Article, html: String): List<String>? {
+        if (html.isBlank()) return emptyList()
 
         val urls =
             Jsoup.parse(html, article.link)
@@ -196,22 +213,27 @@ constructor(
                 .filter { it.startsWith("http") }
                 .distinct()
 
-        return urls.all { url ->
-            // The disk cache stores the original bytes whatever size we decode at, and nothing is
-            // on screen, so decode at 1x1 to keep large images from blowing up memory here.
-            val result =
-                imageLoader.execute(
-                    ImageRequest.Builder(applicationContext)
-                        .data(url)
-                        .size(1, 1)
-                        .memoryCachePolicy(CachePolicy.DISABLED)
-                        .build()
-                )
-            result is SuccessResult
-        }
+        // Every image is attempted, not only those before the first failure: one dead tracking
+        // pixel used to stop all the article's later images from ever being fetched.
+        val results =
+            urls.map { url ->
+                isImageCached(url) ||
+                    // The disk cache stores the original bytes whatever size we decode at, and
+                    // nothing is on screen, so decode at 1x1 to keep large images from blowing up
+                    // memory here.
+                    imageLoader.execute(
+                        ImageRequest.Builder(applicationContext)
+                            .data(url)
+                            .size(1, 1)
+                            .memoryCachePolicy(CachePolicy.DISABLED)
+                            .build()
+                    ) is SuccessResult
+            }
+        return urls.takeIf { results.all { it } }
     }
 
     companion object {
+        private val runLock = Mutex()
         private const val MAX_RUN_ATTEMPTS = 3
         private const val ARTICLE_TIMEOUT_MS = 60_000L
         private const val SQLITE_VARIABLE_LIMIT = 900

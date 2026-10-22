@@ -60,7 +60,7 @@ object ImageLoaderModule {
                     // The prefetched images are part of the offline archive, so they must not sit
                     // in a directory the system is free to reclaim.
                     .directory(archiveDir(context, ARCHIVE_IMAGES))
-                    .maxSizePercent(imageCacheSizePercent(context))
+                    .maxSizeBytes(imageCacheSizeBytes(context))
                     .build()
             )
             // Enable memory cache
@@ -75,7 +75,7 @@ object ImageLoaderModule {
     // The ImageLoader is a singleton built before any Composable runs, so the preference has to be
     // read straight from DataStore rather than through a CompositionLocal. Changing it takes effect
     // on the next app start.
-    private fun imageCacheSizePercent(context: Context): Double = runBlocking {
-        ImageCacheSizePreference.fromPreferences(context.dataStore.data.first()).value / 100.0
+    private fun imageCacheSizeBytes(context: Context): Long = runBlocking {
+        ImageCacheSizePreference.fromPreferences(context.dataStore.data.first()).bytes
     }
 }
