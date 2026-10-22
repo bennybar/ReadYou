@@ -46,8 +46,8 @@ android {
         applicationId = "com.bennybar.readyoureloaded"
         minSdk = 26
         targetSdk = 34
-        versionCode = 67
-        versionName = "0.26.4"
+        versionCode = 68
+        versionName = "0.26.5"
 
         buildConfigField(
             "String",
