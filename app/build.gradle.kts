@@ -143,6 +143,7 @@ dependencies {
     implementation(libs.compose.material3)
 
     // Coil
+    "githubImplementation"(libs.aptabase)
     implementation(libs.coil.base)
     implementation(libs.coil.compose)
     implementation(libs.coil.svg)

@@ -62,6 +62,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // A real open, not a rotation and not a background sync starting the process.
+        if (savedInstanceState == null) UsageAnalytics.trackAppOpened()
         Log.i("RLog", "onCreate: ${ProfileInstallerInitializer().create(this)}")
 
         enableEdgeToEdge()

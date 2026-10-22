@@ -30,6 +30,7 @@ composeHtml = "1.0.2"
 
 # Coil
 coil = "2.5.0"
+aptabase = "0.1.0"
 
 # Hilt
 dagger = "2.57.2"
@@ -80,6 +81,7 @@ compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4
 compose-material3 = { group = "androidx.compose.material3", name = "material3" }
 
 # Coil
+aptabase = { group = "com.github.aptabase", name = "aptabase-kotlin", version.ref = "aptabase" }
 coil-base = { group = "io.coil-kt", name = "coil-base", version.ref = "coil" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 coil-svg = { group = "io.coil-kt", name = "coil-svg", version.ref = "coil" }
