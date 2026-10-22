@@ -444,6 +444,8 @@
     <string name="refetch_on_open_off">Never</string>
     <string name="refetch_on_open_wifi">On Wi-Fi only</string>
     <string name="refetch_on_open_always">Always</string>
+    <string name="remember_reading_position">Remember where I stopped reading</string>
+    <string name="remember_reading_position_desc">Reopen an article where you left it, instead of at the top</string>
     <string name="collapse_duplicates">Collapse duplicate stories</string>
     <string name="collapse_duplicates_desc">Show a story republished under several sections only once</string>
     <string name="mark_duplicates_read">Mark hidden copies as read</string>

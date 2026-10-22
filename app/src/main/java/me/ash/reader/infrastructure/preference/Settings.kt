@@ -86,6 +86,8 @@ data class Settings(
     val markDuplicatesRead: MarkDuplicatesReadPreference = MarkDuplicatesReadPreference.default,
     val readHistory: ReadHistoryPreference = ReadHistoryPreference.default,
     val expressiveStyle: ExpressiveStylePreference = ExpressiveStylePreference.default,
+    val rememberReadingPosition: RememberReadingPositionPreference =
+        RememberReadingPositionPreference.default,
     val pullToSwitchFeed: PullToLoadNextFeedPreference = PullToLoadNextFeedPreference.default,
     val pullToSwitchArticle: PullToSwitchArticlePreference = PullToSwitchArticlePreference.default,
     val openLink: OpenLinkPreference = OpenLinkPreference.default,

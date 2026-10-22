@@ -1,5 +1,6 @@
 package me.ash.reader.ui.page.home.reading
 
+import me.ash.reader.infrastructure.preference.LocalRememberReadingPosition
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import me.ash.reader.infrastructure.preference.LocalExpressiveStyle
 import androidx.compose.material3.LinearWavyProgressIndicator
@@ -221,13 +222,22 @@ fun ReadingPage(
                                 val scope = rememberCoroutineScope()
 
                                 val renderer = LocalReadingRenderer.current
+                                val rememberPosition = LocalRememberReadingPosition.current.value
+                                // Off: every article opens at the top, and nothing is saved.
                                 // Not while the fresh copy is still on its way: the copy on screen
                                 // may be the shorter feed text, and saving a position clamped to it
                                 // would overwrite the real one.
-                                LaunchedEffect(articleId, content, renderer, isRefetchingOnOpen) {
+                                LaunchedEffect(
+                                    articleId,
+                                    content,
+                                    renderer,
+                                    isRefetchingOnOpen,
+                                    rememberPosition,
+                                ) {
                                     val id = articleId
                                     if (
-                                        id == null ||
+                                        !rememberPosition ||
+                                            id == null ||
                                             content is ReaderState.Loading ||
                                             isRefetchingOnOpen
                                     )

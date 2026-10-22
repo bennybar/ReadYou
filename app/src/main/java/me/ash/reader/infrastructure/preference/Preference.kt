@@ -92,6 +92,7 @@ fun Preferences.toSettings(): Settings {
         markDuplicatesRead = MarkDuplicatesReadPreference.fromPreferences(this),
         readHistory = ReadHistoryPreference.fromPreferences(this),
         expressiveStyle = ExpressiveStylePreference.fromPreferences(this),
+        rememberReadingPosition = RememberReadingPositionPreference.fromPreferences(this),
         pullToSwitchFeed = PullToLoadNextFeedPreference.fromPreference(this),
         pullToSwitchArticle = PullToSwitchArticlePreference.fromPreference(this),
         openLink = OpenLinkPreference.fromPreferences(this),

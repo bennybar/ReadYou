@@ -25,7 +25,7 @@ ReadYou has felt close to abandoned over the last few months: its last release w
 - **Right-to-left done properly.** Direction is decided by which script most of the text is in, in the lists and in every paragraph of the reader.
 - **Read Later, synced to FreshRSS**, and always kept offline. Star, Read Later and read changes made offline are sent on the next sync instead of being lost.
 - **Duplicate stories collapsed.** The same article republished under several sections shows up once.
-- **The reader remembers where you stopped**, in each of the last 300 articles.
+- **The reader can remember where you stopped**, in each of the last 300 articles, if you turn it on.
 - **You can see whether background sync works**: a sync log, a "Sync failed" label, and a one-tap battery exemption.
 - **Unread count on the app icon**, where the launcher supports it.
 - **What's new** after each update: a sheet of what changed since the version you had, once, and the full list in *Settings → What's new*.
@@ -105,7 +105,7 @@ FreshRSS reports labels as `"type": "tag"` and folders as `"type": "folder"`, an
 
 - **Opening an article re-downloads it from the source**, for every feed, whatever *Parse full content* is set to (*Settings → Offline → Re-download when opening an article*: always, on Wi-Fi only, or never). The saved copy, or the feed's own text, shows straight away with a thin progress bar under the top bar, and the fresh copy replaces it **in place, keeping your scroll position**. If the download fails, what is on screen stays.
 - **Pull down on an article to re-download it.** A failed refresh keeps the cached copy rather than dropping you onto an error screen. Pull-up still loads the next article.
-- **The reader remembers where you stopped** in each of the last 300 articles. The position is restored only once the page is tall enough to hold it, because the WebView grows as its images load.
+- **The reader can remember where you stopped** in each of the last 300 articles (*Settings → Offline → Remember where I stopped reading*, off by default, so articles open at the top). The position is restored only once the page is tall enough to hold it, because the WebView grows as its images load.
 - **Remove read articles immediately**: in the Unread filter, an article leaves the list the moment it is read. Off by default. The article you are reading stays in the list until you close it, because the reader locates it by index to work out next and previous.
 - **A pin shows what is saved offline**: solid when the full text and all its images are on the device, faint when only the text is.
 - **List thumbnails skip decorations.** WordPress emoji, spacer GIFs and tracking pixels are no longer picked as an article's picture.
@@ -152,6 +152,7 @@ These are real defects in ReadYou, not preferences.
 - *Download now*, with live progress, a summary of the last run, and tap again to stop
 - *Clear offline archive*
 - *Re-download when opening an article*: always / on Wi-Fi only / never
+- *Remember where I stopped reading* (off: articles open at the top)
 - *Collapse duplicate stories*, and *Mark hidden copies as read*
 - *Read articles to fetch from FreshRSS*: the last 1 / 3 / 12 months
 

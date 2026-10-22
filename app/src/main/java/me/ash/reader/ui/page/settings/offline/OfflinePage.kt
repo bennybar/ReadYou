@@ -1,5 +1,6 @@
 package me.ash.reader.ui.page.settings.offline
 
+import me.ash.reader.infrastructure.preference.LocalRememberReadingPosition
 import me.ash.reader.infrastructure.preference.LocalExpressiveStyle
 import me.ash.reader.domain.data.PrefetchSummary
 import androidx.compose.ui.text.font.FontWeight
@@ -86,6 +87,7 @@ fun OfflinePage(onBack: () -> Unit, prefetchViewModel: PrefetchViewModel = hiltV
     val collapseDuplicates = LocalCollapseDuplicates.current
     val markDuplicatesRead = LocalMarkDuplicatesRead.current
     val readHistory = LocalReadHistory.current
+    val rememberReadingPosition = LocalRememberReadingPosition.current
 
     var clearArchiveDialogVisible by remember { mutableStateOf(false) }
     var prefetchScopeDialogVisible by remember { mutableStateOf(false) }
@@ -197,6 +199,15 @@ fun OfflinePage(onBack: () -> Unit, prefetchViewModel: PrefetchViewModel = hiltV
                         desc = refetchOnOpen.toDesc(context),
                         onClick = { refetchOnOpenDialogVisible = true },
                     ) {}
+                    SettingItem(
+                        title = stringResource(R.string.remember_reading_position),
+                        desc = stringResource(R.string.remember_reading_position_desc),
+                        onClick = { rememberReadingPosition.toggle(context, scope) },
+                    ) {
+                        RYSwitch(activated = rememberReadingPosition.value) {
+                            rememberReadingPosition.toggle(context, scope)
+                        }
+                    }
                     Spacer(modifier = Modifier.height(24.dp))
 
                     Subtitle(

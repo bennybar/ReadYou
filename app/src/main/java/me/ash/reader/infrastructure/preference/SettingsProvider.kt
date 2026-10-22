@@ -144,6 +144,7 @@ class SettingsProvider @Inject constructor(
             LocalMarkDuplicatesRead provides settings.markDuplicatesRead,
             LocalReadHistory provides settings.readHistory,
             LocalExpressiveStyle provides settings.expressiveStyle,
+            LocalRememberReadingPosition provides settings.rememberReadingPosition,
             LocalPullToSwitchArticle provides settings.pullToSwitchArticle,
             LocalOpenLink provides settings.openLink,
             LocalOpenLinkSpecificBrowser provides settings.openLinkSpecificBrowser,
