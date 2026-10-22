@@ -56,6 +56,11 @@ class Release(val version: String, val date: String, val highlights: List<String
 val CHANGELOG =
     listOf(
         Release(
+            "0.26.3",
+            "Oct 22, 2026",
+            listOf("Smoother swipes: one color from the start, and the card keeps its rounded corners as it slides"),
+        ),
+        Release(
             "0.26.2",
             "Oct 22, 2026",
             listOf(
