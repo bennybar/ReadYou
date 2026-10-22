@@ -1,10 +1,15 @@
 package me.ash.reader.ui.component
 
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.material.icons.rounded.MarkEmailUnread
+import androidx.compose.material.icons.outlined.MarkEmailUnread
+import androidx.compose.material.icons.Icons
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.BorderStroke
 import me.ash.reader.infrastructure.preference.LocalExpressiveStyle
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.selected
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Box
 import android.os.Build
 import android.view.SoundEffectConstants
@@ -132,38 +137,77 @@ fun FilterBar(
 }
 
 /**
- * A floating toolbar instead of a full-width bar: a light raised pill, the selected filter as a
- * labelled pill in the primary color and the others as icons.
+ * A floating toolbar instead of a full-width bar: a light pill with a hairline outline and a soft
+ * shadow, so it stands off the content; the list fades out behind it. The selected filter is a
+ * labelled tonal pill, the others even 48dp icon buttons.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ExpressiveFilterBar(modifier: Modifier, filter: Filter, onClick: (Filter) -> Unit) {
+    val colors = MaterialTheme.colorScheme
     Box(
         modifier =
             modifier
                 .fillMaxWidth()
+                .background(
+                    Brush.verticalGradient(0f to Color.Transparent, 0.45f to colors.surface)
+                )
                 .windowInsetsPadding(NavigationBarDefaults.windowInsets)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 14.dp),
         contentAlignment = Alignment.Center,
     ) {
-        HorizontalFloatingToolbar(
-            expanded = true,
-            colors = FloatingToolbarDefaults.standardFloatingToolbarColors(),
+        Surface(
+            shape = CircleShape,
+            color = colors.surfaceContainer,
+            border = BorderStroke(1.dp, colors.outlineVariant.copy(alpha = 0.6f)),
+            shadowElevation = 6.dp,
         ) {
-            Filter.values.forEach { item ->
-                if (item == filter) {
-                    Button(
+            Row(
+                modifier = Modifier.height(60.dp).padding(6.dp).selectableGroup(),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Filter.values.forEach { item ->
+                    val selected = item == filter
+                    val icon =
+                        when {
+                            // A proper "unread" glyph; the plain dot read as unfinished here.
+                            item == Filter.Unread ->
+                                if (selected) Icons.Rounded.MarkEmailUnread
+                                else Icons.Outlined.MarkEmailUnread
+                            selected -> item.iconFilled
+                            else -> item.iconOutline
+                        }
+                    Surface(
+                        selected = selected,
                         onClick = { onClick(item) },
-                        modifier = Modifier.semantics { selected = true },
-                        contentPadding = PaddingValues(horizontal = 16.dp),
+                        shape = CircleShape,
+                        color = if (selected) colors.primaryContainer else Color.Transparent,
+                        contentColor =
+                            if (selected) colors.onPrimaryContainer else colors.onSurfaceVariant,
                     ) {
-                        Icon(imageVector = item.iconFilled, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(text = item.toName(), maxLines = 1)
-                    }
-                } else {
-                    IconButton(onClick = { onClick(item) }) {
-                        Icon(imageVector = item.iconOutline, contentDescription = item.toName())
+                        Row(
+                            modifier =
+                                Modifier.height(48.dp)
+                                    .defaultMinSize(minWidth = 48.dp)
+                                    .padding(horizontal = if (selected) 16.dp else 12.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(
+                                imageVector = icon,
+                                contentDescription = if (selected) null else item.toName(),
+                                modifier = Modifier.size(22.dp),
+                            )
+                            if (selected) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = item.toName(),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                )
+                            }
+                        }
                     }
                 }
             }
