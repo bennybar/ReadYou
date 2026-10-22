@@ -1,5 +1,6 @@
 package me.ash.reader.ui.page.home.flow
 
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.runtime.CompositionLocalProvider
 import me.ash.reader.infrastructure.preference.LocalExpressiveStyle
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -638,6 +639,10 @@ private fun SwipeActionBox(
         backgroundUntilSwipeThreshold =
             if (LocalExpressiveStyle.current.value) containerColor
             else MaterialTheme.colorScheme.surface,
+        // Expressive: the revealed color is its own rounded block, a little apart from the card.
+        actionShape =
+            if (LocalExpressiveStyle.current.value) ArticleCardShape else RectangleShape,
+        actionGap = if (LocalExpressiveStyle.current.value) 6.dp else 0.dp,
     ) {
         content.invoke()
     }

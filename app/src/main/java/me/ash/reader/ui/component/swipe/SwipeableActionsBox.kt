@@ -14,7 +14,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.layout
@@ -38,6 +41,10 @@ import kotlin.math.roundToInt
  * @param backgroundUntilSwipeThreshold Color drawn behind the content until
  * [swipeThreshold] is reached. When the threshold is passed, this color is
  * replaced by the currently visible [SwipeAction]'s background.
+ *
+ * @param actionShape Shape of the colored area revealed behind the content. Its edge facing the
+ * content follows the content, [actionGap] short of it, so a rounded shape reads as its own block
+ * rather than a fill the content slides across.
  */
 @Composable
 fun SwipeableActionsBox(
@@ -47,8 +54,11 @@ fun SwipeableActionsBox(
   endActions: List<SwipeAction> = emptyList(),
   swipeThreshold: Dp = 40.dp,
   backgroundUntilSwipeThreshold: Color = Color.DarkGray,
+  actionShape: Shape = RectangleShape,
+  actionGap: Dp = 0.dp,
   content: @Composable BoxScope.() -> Unit
 ) = Box(modifier) {
+  val actionGapPx = LocalDensity.current.run { actionGap.toPx() }
   state.also {
     it.swipeThresholdPx = LocalDensity.current.run { swipeThreshold.toPx() }
     val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
@@ -98,6 +108,8 @@ fun SwipeableActionsBox(
       action = action,
       offset = state.offset.value,
       backgroundColor = animatedBackgroundColor,
+      shape = actionShape,
+      gapPx = actionGapPx,
       content = { action.value.icon() }
     )
   }
@@ -115,6 +127,8 @@ private fun ActionIconBox(
     action: SwipeActionMeta,
     offset: Float,
     backgroundColor: Color,
+    shape: Shape,
+    gapPx: Float,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
@@ -124,10 +138,13 @@ private fun ActionIconBox(
         val placeable = measurable.measure(constraints)
         layout(width = placeable.width, height = placeable.height) {
           // Align icon with the left/right edge of the content being swiped.
-          val iconOffset = if (action.isOnRightSide) constraints.maxWidth + offset else offset - placeable.width
+          val iconOffset =
+            if (action.isOnRightSide) constraints.maxWidth + offset + gapPx
+            else offset - placeable.width - gapPx
           placeable.place(x = iconOffset.roundToInt(), y = 0)
         }
       }
+      .clip(shape)
       .background(color = backgroundColor),
     horizontalArrangement = if (action.isOnRightSide) Arrangement.Absolute.Left else Arrangement.Absolute.Right,
     verticalAlignment = Alignment.CenterVertically,
