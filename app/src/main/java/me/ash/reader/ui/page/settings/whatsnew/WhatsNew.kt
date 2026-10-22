@@ -56,6 +56,18 @@ class Release(val version: String, val date: String, val highlights: List<String
 val CHANGELOG =
     listOf(
         Release(
+            "0.26.0",
+            "Oct 22, 2026",
+            listOf(
+                "A new Material 3 Expressive look, on by default (Settings → Color & style → Expressive style)",
+                "Home: big filter cards with counts and a floating filter toolbar",
+                "Articles as rounded cards with an Offline or Text only chip",
+                "Reader: a floating toolbar with a big Next button",
+                "Offline page: see how much of the archive is used, and download or stop from one card",
+                "What's new: this list, once after each update, and any time in Settings",
+            ),
+        ),
+        Release(
             "0.25.0",
             "Oct 22, 2026",
             listOf(
