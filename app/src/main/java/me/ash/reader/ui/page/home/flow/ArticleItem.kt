@@ -208,8 +208,11 @@ fun ArticleItem(
             modifier
                 .then(
                     when {
+                        // Still clipped to its own corners: the swipe area's clip shapes what is
+                        // revealed behind it, not the card's edge as it slides away.
                         expressive && framedOutside ->
-                            Modifier.background(MaterialTheme.colorScheme.surfaceContainerLow)
+                            Modifier.clip(ArticleCardShape)
+                                .background(MaterialTheme.colorScheme.surfaceContainerLow)
                         // Each article its own tonal card, a little apart from the next.
                         expressive ->
                             Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
@@ -630,7 +633,11 @@ private fun SwipeActionBox(
         modifier = modifier,
         startActions = listOfNotNull(startAction),
         endActions = listOfNotNull(endAction),
-        backgroundUntilSwipeThreshold = MaterialTheme.colorScheme.surface,
+        // In the expressive style the action color shows from the first pixel, instead of the
+        // surface jumping to it once the swipe passes the threshold.
+        backgroundUntilSwipeThreshold =
+            if (LocalExpressiveStyle.current.value) containerColor
+            else MaterialTheme.colorScheme.surface,
     ) {
         content.invoke()
     }
