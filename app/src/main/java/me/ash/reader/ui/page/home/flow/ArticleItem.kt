@@ -1,5 +1,7 @@
 package me.ash.reader.ui.page.home.flow
 
+import me.ash.reader.infrastructure.preference.LocalExpressiveStyle
+import androidx.compose.foundation.shape.RoundedCornerShape
 import me.ash.reader.infrastructure.rss.OfflineState
 import androidx.compose.material.icons.rounded.OfflinePin
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -189,12 +191,20 @@ fun ArticleItem(
     val articleListDesc = LocalFlowArticleListDesc.current
     val articleListDate = LocalFlowArticleListTime.current
     val articleListReadIndicator = LocalFlowArticleListReadIndicator.current
+    val expressive = LocalExpressiveStyle.current.value
 
     Column(
         modifier =
             modifier
                 .padding(horizontal = 12.dp)
-                .clip(Shape20)
+                .then(
+                    // Each article its own tonal card, a little apart from the next.
+                    if (expressive)
+                        Modifier.padding(vertical = 4.dp)
+                            .clip(RoundedCornerShape(26.dp))
+                            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                    else Modifier.clip(Shape20)
+                )
                 .combinedClickable(onClick = onClick, onLongClick = onLongClick)
                 .padding(horizontal = 12.dp, vertical = 12.dp)
                 .alpha(
@@ -234,7 +244,7 @@ fun ArticleItem(
                 )
 
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier) {
-                    OfflineIcon(offlineState)
+                    if (expressive) OfflineChip(offlineState) else OfflineIcon(offlineState)
                     // Starred
                     if (isStarred) {
                         StarredIcon()
@@ -262,7 +272,7 @@ fun ArticleItem(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.labelMedium,
                         )
-                        OfflineIcon(offlineState)
+                        if (expressive) OfflineChip(offlineState) else OfflineIcon(offlineState)
                         // Starred
                         if (isStarred) {
                             StarredIcon()
@@ -294,7 +304,10 @@ fun ArticleItem(
                         style =
                             MaterialTheme.typography.titleMedium
                                 .applyTextDirection(title.isRtl())
-                                .merge(lineHeight = 22.sp),
+                                .merge(
+                                    lineHeight = 22.sp,
+                                    fontWeight = if (expressive) FontWeight.Bold else null,
+                                ),
                         maxLines =
                             if (articleListDesc != FlowArticleListDescPreference.NONE) 2 else 4,
                         overflow = TextOverflow.Ellipsis,
@@ -341,7 +354,10 @@ fun ArticleItem(
             // Image
             if (imgData != null && articleListImage.value) {
                 RYAsyncImage(
-                    modifier = Modifier.padding(start = 10.dp).size(80.dp).clip(Shape20),
+                    modifier =
+                        if (expressive)
+                            Modifier.padding(start = 12.dp).size(88.dp).clip(RoundedCornerShape(20.dp))
+                        else Modifier.padding(start = 10.dp).size(80.dp).clip(Shape20),
                     data = imgData,
                     scale = Scale.FILL,
                     precision = Precision.INEXACT,
@@ -365,6 +381,30 @@ fun StarredIcon(modifier: Modifier = Modifier) {
         imageVector = Icons.Rounded.Star,
         contentDescription = stringResource(R.string.starred),
         tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+    )
+}
+
+/** The expressive style's version of [OfflineIcon]: a short labelled chip. */
+@Composable
+fun OfflineChip(state: OfflineState, modifier: Modifier = Modifier) {
+    if (state == OfflineState.NONE) return
+    val ready = state == OfflineState.READY
+    Text(
+        modifier =
+            modifier
+                .padding(end = 6.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(
+                    if (ready) MaterialTheme.colorScheme.primaryContainer
+                    else MaterialTheme.colorScheme.surfaceContainerHighest
+                )
+                .padding(horizontal = 8.dp, vertical = 2.dp),
+        text = stringResource(if (ready) R.string.offline_chip else R.string.text_only_chip),
+        style = MaterialTheme.typography.labelMedium,
+        fontWeight = FontWeight.SemiBold,
+        color =
+            if (ready) MaterialTheme.colorScheme.onPrimaryContainer
+            else MaterialTheme.colorScheme.onSurfaceVariant,
     )
 }
 
