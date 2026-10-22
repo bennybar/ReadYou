@@ -181,10 +181,15 @@ constructor(
 
                 val articleContent = Readability.parseToElement(content, link)
                 articleContent?.let {
-                    val h1Element = articleContent.selectFirst("h1")
-                    if (h1Element != null && h1Element.hasText() && h1Element.text() == title) {
-                        h1Element.remove()
-                    }
+                    // The reader shows the title above the body already. Not only the first <h1>:
+                    // pages often open with a section label in one (ice: "דיגיטל וטק") and put
+                    // the headline in the next. Compared without whitespace, because feeds
+                    // differ from their own pages there ("קרןBIRDאישרה" against "קרן BIRD אישרה").
+                    val bareTitle = title.filterNot { it.isWhitespace() }
+                    articleContent
+                        .select("h1, h2")
+                        .filter { it.text().filterNot { c -> c.isWhitespace() } == bareTitle }
+                        .forEach { it.remove() }
                     articleContent.toString()
                 } ?: throw IOException("articleContent is null")
             } else throw IOException(response.message)

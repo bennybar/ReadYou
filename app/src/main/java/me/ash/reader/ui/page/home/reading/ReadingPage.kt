@@ -1,5 +1,13 @@
 package me.ash.reader.ui.page.home.reading
 
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
@@ -170,8 +178,13 @@ fun ReadingPage(
                                     ))
                         },
                         label = "",
+                        // Keyed by article, so a fresher copy of the same article (the download
+                        // on open, the full-content toggle) recomposes the page in place instead
+                        // of building a new one with a new scroll state, which threw the reader
+                        // back to the top mid-read.
+                        contentKey = { it.articleId },
                     ) {
-                        remember { it }
+                        it
                             .run {
                                 // Pulling down re-downloads the article from its own site, whatever
                                 // the feed happened to deliver. Gating this on "is the full article
@@ -194,7 +207,7 @@ fun ReadingPage(
 
                                 val listState =
                                     rememberSaveable(
-                                        inputs = arrayOf(content),
+                                        inputs = arrayOf(articleId),
                                         saver = LazyListState.Saver,
                                     ) {
                                         LazyListState()
@@ -295,6 +308,24 @@ fun ReadingPage(
                                             canLoadNext = isNextArticleAvailable,
                                             canRefresh = true,
                                         )
+                                        if (isRefetchingOnOpen) {
+                                            val refreshing =
+                                                stringResource(R.string.refreshing_article)
+                                            LinearProgressIndicator(
+                                                modifier =
+                                                    Modifier.align(Alignment.TopCenter)
+                                                        .padding(
+                                                            top =
+                                                                paddings.calculateTopPadding() +
+                                                                    64.dp
+                                                        )
+                                                        .fillMaxWidth()
+                                                        .height(2.dp)
+                                                        .semantics {
+                                                            contentDescription = refreshing
+                                                        }
+                                            )
+                                        }
                                     }
                                 }
                             }

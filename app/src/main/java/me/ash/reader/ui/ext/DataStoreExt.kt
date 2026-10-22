@@ -198,6 +198,10 @@ sealed interface PreferencesKey {
         const val removeReadImmediately = "removeReadImmediately"
         const val unreadBadge = "unreadBadge"
         const val imageCacheSize = "imageCacheSize"
+        const val refetchOnOpen = "refetchOnOpen"
+        const val collapseDuplicates = "collapseDuplicates"
+        const val markDuplicatesRead = "markDuplicatesRead"
+        const val readHistoryMonths = "readHistoryMonths"
         const val pullToLoadNextFeed = "pullToLoadNextFeed"
         const val pullToSwitchArticle = "pullToSwitchArticle"
         const val openLink = "openLink"
@@ -280,6 +284,10 @@ sealed interface PreferencesKey {
                 BooleanKey(removeReadImmediately),
                 BooleanKey(unreadBadge),
                 IntKey(imageCacheSize),
+                IntKey(refetchOnOpen),
+                BooleanKey(collapseDuplicates),
+                BooleanKey(markDuplicatesRead),
+                IntKey(readHistoryMonths),
                 BooleanKey(pullToLoadNextFeed),
                 BooleanKey(pullToSwitchArticle),
                 IntKey(openLink),
@@ -372,6 +380,10 @@ data class DataStoreKey<T>(val key: Preferences.Key<T>, val type: Class<T>) {
         const val removeReadImmediately = "removeReadImmediately"
         const val unreadBadge = "unreadBadge"
         const val imageCacheSize = "imageCacheSize"
+        const val refetchOnOpen = "refetchOnOpen"
+        const val collapseDuplicates = "collapseDuplicates"
+        const val markDuplicatesRead = "markDuplicatesRead"
+        const val readHistoryMonths = "readHistoryMonths"
         const val pullToLoadNextFeed = "pullToLoadNextFeed"
         const val pullToSwitchArticle = "pullToSwitchArticle"
         const val openLink = "openLink"
@@ -530,6 +542,13 @@ data class DataStoreKey<T>(val key: Preferences.Key<T>, val type: Class<T>) {
                     DataStoreKey(booleanPreferencesKey(unreadBadge), Boolean::class.java),
                 imageCacheSize to
                     DataStoreKey(intPreferencesKey(imageCacheSize), Int::class.java),
+                refetchOnOpen to DataStoreKey(intPreferencesKey(refetchOnOpen), Int::class.java),
+                collapseDuplicates to
+                    DataStoreKey(booleanPreferencesKey(collapseDuplicates), Boolean::class.java),
+                markDuplicatesRead to
+                    DataStoreKey(booleanPreferencesKey(markDuplicatesRead), Boolean::class.java),
+                readHistoryMonths to
+                    DataStoreKey(intPreferencesKey(readHistoryMonths), Int::class.java),
                 pullToLoadNextFeed to
                     DataStoreKey(booleanPreferencesKey(pullToLoadNextFeed), Boolean::class.java),
                 pullToSwitchArticle to

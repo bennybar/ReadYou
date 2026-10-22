@@ -542,7 +542,12 @@ abstract class AbstractRssRepository(
      * The hidden copy is also retired as read, including on the server: it is never going to be
      * opened, so leaving it unread would quietly inflate the unread count in FreshRSS forever.
      */
-    suspend fun dedupeArticles(accountId: Int) {
+    suspend fun dedupeArticles(accountId: Int, collapse: Boolean, markRead: Boolean) {
+        if (!collapse) {
+            // Turning it off shows the hidden copies again.
+            articleDao.clearDuplicates(accountId)
+            return
+        }
         val unkeyed = articleDao.queryArticlesWithoutDedupeKey(accountId)
         if (unkeyed.isNotEmpty()) {
             articleDao.update(
@@ -558,6 +563,7 @@ abstract class AbstractRssRepository(
 
         articleDao.markDuplicates(accountId)
 
+        if (!markRead) return
         articleDao.queryUnreadDuplicateIds(accountId).forEach { articleId ->
             markAsRead(
                 groupId = null,

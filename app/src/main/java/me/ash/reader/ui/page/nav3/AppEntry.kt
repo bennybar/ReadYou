@@ -52,6 +52,7 @@ import me.ash.reader.ui.page.settings.languages.LanguagesPage
 import me.ash.reader.ui.page.settings.tips.LicenseListPage
 import me.ash.reader.ui.page.settings.tips.TipsAndSupportPage
 import me.ash.reader.ui.page.settings.synclog.SyncLogPage
+import me.ash.reader.ui.page.settings.offline.OfflinePage
 import me.ash.reader.ui.page.settings.troubleshooting.TroubleshootingPage
 import me.ash.reader.ui.page.startup.StartupPage
 
@@ -186,6 +187,7 @@ fun AppEntry(backStack: NavBackStack<NavKey>) {
                                 navigateToInteraction = { backStack.add(Route.Interaction) },
                                 navigateToLanguages = { backStack.add(Route.Languages) },
                                 navigateToSyncLog = { backStack.add(Route.SyncLog) },
+                                navigateToOffline = { backStack.add(Route.Offline) },
                                 navigateToTroubleshooting = {
                                     backStack.add(Route.Troubleshooting)
                                 },
@@ -267,6 +269,7 @@ fun AppEntry(backStack: NavBackStack<NavKey>) {
                     Route.Interaction -> NavEntry(key) { InteractionPage(onBack = onBack) }
                     Route.Languages -> NavEntry(key) { LanguagesPage(onBack = onBack) }
                     Route.SyncLog -> NavEntry(key) { SyncLogPage(onBack = onBack) }
+                    Route.Offline -> NavEntry(key) { OfflinePage(onBack = onBack) }
                     Route.Troubleshooting -> NavEntry(key) { TroubleshootingPage(onBack = onBack) }
                     Route.TipsAndSupport ->
                         NavEntry(key) {

@@ -1,5 +1,8 @@
 package me.ash.reader.domain.service
 
+import me.ash.reader.ui.ext.dataStore
+import me.ash.reader.infrastructure.preference.toSettings
+import kotlinx.coroutines.flow.first
 import android.content.Context
 import android.util.Log
 import androidx.compose.ui.util.fastFilter
@@ -267,11 +270,12 @@ constructor(
             }
             val googleReaderAPI = getGoogleReaderAPI()
             googleReaderAPI.refreshCredentialsIfNeeded()
+            val readHistoryMonths = context.dataStore.data.first().toSettings().readHistory.months
             val lastMonthAt =
                 Calendar.getInstance()
                     .apply {
                         time = preDate
-                        add(Calendar.MONTH, -1)
+                        add(Calendar.MONTH, -readHistoryMonths)
                     }
                     .time
                     .time / 1000

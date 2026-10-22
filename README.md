@@ -84,20 +84,23 @@ The key is deliberately strict: the **host, the site's own article id from the U
 - The publish timestamp is not part of it: copies of one story do not always share one.
 - The article id alone is not enough: a site whose URLs carry no meaningful last segment would collapse everything it publishes.
 - The title alone is not enough: a daily column keeps its headline, so keying on it would hide every edition but the first.
+- The URL's query string counts, minus tracking parameters, because YouTube (`watch?v=…`) and `article.php?id=…` keep the real id there.
+
+Both halves are settings (*Settings → Offline*): collapsing itself, and marking the hidden copies read on the server.
 
 ## Read Later, synced to FreshRSS
 
 `isReadLater` existed in ReadYou's database but had **no setter, no UI and no sync**. Here it is a real feature:
 
 - A bookmark toggle in the reader and a dedicated **filter tab**.
-- Synced to FreshRSS as a label (`user/-/label/Read Later`) via the Google Reader `edit-tag` API, and pulled back on every sync, so the list follows you across devices.
+- Synced to FreshRSS as a label (`user/-/label/Read Later`) via the Google Reader `edit-tag` API, and pulled back on every sync, so the list follows you across devices. Like every read article, a read Read Later item only comes down to a new device if it is within *Read articles to fetch from FreshRSS* (1, 3 or 12 months).
 - **Always kept offline.** A Read Later article is downloaded even after you have read it, ahead of everything else, and *Keep archived articles* never deletes it.
 
 FreshRSS reports labels as `"type": "tag"` and folders as `"type": "folder"`, and groups are built from *feed* categories, so the label cannot show up as a bogus group.
 
 ## Reading and lists
 
-- **Opening an article re-downloads it from the source**, for every feed, whatever *Parse full content* is set to. The saved copy, or the feed's own text, shows straight away and is swapped for the fresh one when it arrives. If the download fails, what is on screen stays.
+- **Opening an article re-downloads it from the source**, for every feed, whatever *Parse full content* is set to (*Settings → Offline → Re-download when opening an article*: always, on Wi-Fi only, or never). The saved copy, or the feed's own text, shows straight away with a thin progress bar under the top bar, and the fresh copy replaces it **in place, keeping your scroll position**. If the download fails, what is on screen stays.
 - **Pull down on an article to re-download it.** A failed refresh keeps the cached copy rather than dropping you onto an error screen. Pull-up still loads the next article.
 - **The reader remembers where you stopped** in each of the last 300 articles. The position is restored only once the page is tall enough to hold it, because the WebView grows as its images load.
 - **Remove read articles immediately**: in the Unread filter, an article leaves the list the moment it is read. Off by default. The article you are reading stays in the list until you close it, because the reader locates it by index to work out next and previous.
@@ -126,6 +129,8 @@ These are real defects in ReadYou, not preferences.
 - **A failed full-text fetch showed the word "null".** The fetch fails with a bare `Exception()`, and the reader displayed its message as the body. It now falls back to the feed's summary.
 - **An empty archive file hid the article forever.** "Is it cached?" only asked whether the file existed, so an empty file, left by an interrupted write, showed a blank article that was never re-fetched. Blank files now count as missing, and bodies are written to a temp file and renamed into place.
 - **Images of a later full-text fetch were never downloaded.** If the full text failed at first, the prefetcher cached the *summary's* images and marked the article done, so the full article's own images never came. A new body now resets that marker.
+- **Some articles were squeezed into a narrow column.** Pages that wrap their story in an `<article>` of their own keep it through extraction, and the reader's stylesheet gave every `article` the side margins, so those articles were indented twice as far as the title. Only the reader's own wrapper gets them now.
+- **The headline could appear twice.** Extraction dropped the article's first `<h1>` only if it matched the title exactly, so a page opening with a section label in an `<h1>`, or a feed whose title spaces differ from the page's, showed the headline again under the title.
 - **Read Later articles were deleted by *Keep archived articles*.** The cleanup only spared unread and starred articles.
 - **A start-up race could kill the app.** `GroupWithFeedsListUseCase` declared its `init` block *above* the flows it uses, and Kotlin runs initialisers in declaration order, so coroutines launched from `init` could reach `feedsFlow` while it was still null.
 - **The APK filename was garbage.** The build folded git's stderr into stdout and used the error text as the commit hash.
@@ -134,18 +139,19 @@ These are real defects in ReadYou, not preferences.
 
 ## Settings
 
-New settings live under **Settings → Interaction**:
+**Settings → Offline** holds everything about keeping articles on the device:
 
 - *Full content for all feeds*
 - *Prefetch images*
 - *What to keep offline*: unread / unread + starred / all articles
 - *Image cache size*: 1 / 2 / 5 / 10 / 25 GB (takes effect the next time the app starts)
-- *Download now*, with live progress and a summary of the last run
+- *Download now*, with live progress, a summary of the last run, and tap again to stop
 - *Clear offline archive*
-- *Remove read articles immediately*
-- *Unread count on the app icon*
+- *Re-download when opening an article*: always / on Wi-Fi only / never
+- *Collapse duplicate stories*, and *Mark hidden copies as read*
+- *Read articles to fetch from FreshRSS*: the last 1 / 3 / 12 months
 
-And **Settings → Sync log** for the sync history. With a large phone, **All articles** + **25 GB** is the intended configuration.
+**Settings → Interaction** has *Remove read articles immediately* and *Unread count on the app icon*, and **Settings → Sync log** the sync history. With a large phone, **All articles** + **25 GB** is the intended configuration.
 
 ## Things worth knowing
 

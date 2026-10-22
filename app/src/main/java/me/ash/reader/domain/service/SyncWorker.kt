@@ -1,5 +1,8 @@
 package me.ash.reader.domain.service
 
+import me.ash.reader.ui.ext.dataStore
+import me.ash.reader.infrastructure.preference.toSettings
+import kotlinx.coroutines.flow.first
 import android.content.Context
 import androidx.hilt.work.HiltWorker
 import androidx.work.*
@@ -75,7 +78,14 @@ constructor(
             }
             .also {
                 // Before the prefetcher runs, so duplicates are never fetched or cached.
-                rssService.get().dedupeArticles(accountId)
+                val settings = applicationContext.dataStore.data.first().toSettings()
+                rssService
+                    .get()
+                    .dedupeArticles(
+                        accountId,
+                        collapse = settings.collapseDuplicates.value,
+                        markRead = settings.markDuplicatesRead.value,
+                    )
                 rssService.get().clearKeepArchivedArticles().forEach {
                     readerCacheHelper.deleteCacheFor(articleId = it.id)
                     articleFtsDao.deleteByArticleId(articleId = it.id)

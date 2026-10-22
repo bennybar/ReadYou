@@ -61,6 +61,8 @@ sealed interface Route : NavKey {
     // Sync log
     @Serializable data object SyncLog : Route
 
+    @Serializable data object Offline : Route
+
     // Troubleshooting
     @Serializable data object Troubleshooting : Route
 

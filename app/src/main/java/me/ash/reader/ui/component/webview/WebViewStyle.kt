@@ -82,7 +82,10 @@ ${applyFontFace(fontPath)}
     --pre-color;
 }
 
-article {
+/* Only the reader's own wrapper. Some pages put their whole story in an <article> of their own,
+   which Readability keeps; a bare `article` selector gave that one the side margins too, so the
+   text sat in a column twice as indented as the title. */
+main > article {
     padding: 0;
     margin: 0;
     margin-left: var(--text-margin) !important;

@@ -21,6 +21,9 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
  *   two of the Mako pairs did, a third was six hours apart.
  * - The article id alone is not enough, because a site whose URLs carry no meaningful last segment
  *   (`?id=123`, a trailing slash) would collapse everything it publishes.
+ * - The query string is part of the id, minus tracking parameters. YouTube (`/watch?v=…`) and
+ *   `article.php?id=…` put the real id there, so without it every video of a channel with a
+ *   recurring title keyed the same and all but the first were hidden.
  * - The title alone is not enough, because a daily column keeps its headline; its article id
  *   changes, so requiring both keeps it safe.
  */
@@ -32,10 +35,18 @@ fun dedupeKeyOf(link: String, title: String): String? {
             it.isNotBlank()
         } ?: return null
 
+    val query =
+        url.queryParameterNames
+            .filterNot { name -> TRACKING_PARAMETERS.any { name.startsWith(it) } }
+            .sorted()
+            .joinToString("&") { name -> "$name=${url.queryParameterValues(name).joinToString(",")}" }
+
     val normalisedTitle = title.trim().lowercase().replace(WHITESPACE, " ")
     if (normalisedTitle.isBlank()) return null
 
-    return "${url.host}|$articleId|$normalisedTitle"
+    return "${url.host}|$articleId?$query|$normalisedTitle"
 }
+
+private val TRACKING_PARAMETERS = listOf("utm_", "fbclid", "gclid", "mc_", "ref", "_ga")
 
 private val WHITESPACE = Regex("\\s+")

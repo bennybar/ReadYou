@@ -9,10 +9,6 @@ import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.outlined.DeleteSweep
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -29,20 +25,14 @@ import me.ash.reader.infrastructure.preference.InitialFilterPreference
 import me.ash.reader.infrastructure.preference.InitialPagePreference
 import me.ash.reader.infrastructure.preference.LocalArticleListSwipeEndAction
 import me.ash.reader.infrastructure.preference.LocalArticleListSwipeStartAction
-import me.ash.reader.infrastructure.preference.ImageCacheSizePreference
-import me.ash.reader.infrastructure.preference.LocalFullContentAllFeeds
 import me.ash.reader.infrastructure.preference.LocalHideEmptyGroups
-import me.ash.reader.infrastructure.preference.LocalImageCacheSize
-import me.ash.reader.infrastructure.preference.LocalPrefetchScope
 import me.ash.reader.infrastructure.preference.LocalRemoveReadImmediately
 import me.ash.reader.infrastructure.preference.LocalUnreadBadge
-import me.ash.reader.infrastructure.preference.PrefetchScopePreference
 import me.ash.reader.infrastructure.preference.LocalInitialFilter
 import me.ash.reader.infrastructure.preference.LocalInitialPage
 import me.ash.reader.infrastructure.preference.LocalMarkAsReadOnScroll
 import me.ash.reader.infrastructure.preference.LocalOpenLink
 import me.ash.reader.infrastructure.preference.LocalOpenLinkSpecificBrowser
-import me.ash.reader.infrastructure.preference.LocalPrefetchImages
 import me.ash.reader.infrastructure.preference.LocalPullToSwitchArticle
 import me.ash.reader.infrastructure.preference.LocalSettings
 import me.ash.reader.infrastructure.preference.LocalSharedContent
@@ -54,41 +44,30 @@ import me.ash.reader.infrastructure.preference.SortUnreadArticlesPreference
 import me.ash.reader.infrastructure.preference.SwipeEndActionPreference
 import me.ash.reader.infrastructure.preference.SwipeStartActionPreference
 import me.ash.reader.ui.component.base.DisplayText
-import me.ash.reader.ui.component.base.RYDialog
 import me.ash.reader.ui.component.base.FeedbackIconButton
 import me.ash.reader.ui.component.base.RYScaffold
 import me.ash.reader.ui.component.base.RYSwitch
 import me.ash.reader.ui.component.base.RadioDialog
 import me.ash.reader.ui.component.base.RadioDialogOption
 import me.ash.reader.ui.component.base.Subtitle
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import me.ash.reader.ui.ext.collectAsStateValue
 import me.ash.reader.ui.ext.getBrowserAppList
-import me.ash.reader.ui.ext.showToast
 import me.ash.reader.ui.page.settings.SettingItem
 import me.ash.reader.ui.theme.palette.onLight
 
 @Composable
 fun InteractionPage(
     onBack: () -> Unit,
-    prefetchViewModel: PrefetchViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
-    val prefetchProgress = prefetchViewModel.progress.collectAsStateValue()
-    val lastPrefetchRun = prefetchViewModel.lastRun.collectAsStateValue()
-    var clearArchiveDialogVisible by remember { mutableStateOf(false) }
     val initialPage = LocalInitialPage.current
     val initialFilter = LocalInitialFilter.current
     val swipeToStartAction = LocalArticleListSwipeStartAction.current
     val swipeToEndAction = LocalArticleListSwipeEndAction.current
     val markAsReadOnScroll = LocalMarkAsReadOnScroll.current
     val hideEmptyGroups = LocalHideEmptyGroups.current
-    val fullContentAllFeeds = LocalFullContentAllFeeds.current
-    val prefetchImages = LocalPrefetchImages.current
-    val prefetchScope = LocalPrefetchScope.current
     val removeReadImmediately = LocalRemoveReadImmediately.current
     val unreadBadge = LocalUnreadBadge.current
-    val imageCacheSize = LocalImageCacheSize.current
     val sortUnreadArticles = LocalSortUnreadArticles.current
     val pullToSwitchArticle = LocalPullToSwitchArticle.current
     val openLink = LocalOpenLink.current
@@ -108,8 +87,6 @@ fun InteractionPage(
     var openLinkDialogVisible by remember { mutableStateOf(false) }
     var openLinkSpecificBrowserDialogVisible by remember { mutableStateOf(false) }
     var sharedContentDialogVisible by remember { mutableStateOf(false) }
-    var prefetchScopeDialogVisible by remember { mutableStateOf(false) }
-    var imageCacheSizeDialogVisible by remember { mutableStateOf(false) }
     var showSortUnreadArticlesDialog by remember { mutableStateOf(false) }
     var showPullToLoadDialog by remember { mutableStateOf(false) }
 
@@ -248,69 +225,6 @@ fun InteractionPage(
 
                     Subtitle(
                         modifier = Modifier.padding(horizontal = 24.dp),
-                        text = stringResource(R.string.parse_full_content),
-                    )
-                    SettingItem(
-                        title = stringResource(R.string.full_content_all_feeds),
-                        desc = stringResource(R.string.full_content_all_feeds_desc),
-                        onClick = { fullContentAllFeeds.toggle(context, scope) },
-                    ) {
-                        RYSwitch(activated = fullContentAllFeeds.value) {
-                            fullContentAllFeeds.toggle(context, scope)
-                        }
-                    }
-                    SettingItem(
-                        title = stringResource(R.string.prefetch_images),
-                        desc = stringResource(R.string.prefetch_images_desc),
-                        onClick = { prefetchImages.toggle(context, scope) },
-                    ) {
-                        RYSwitch(activated = prefetchImages.value) {
-                            prefetchImages.toggle(context, scope)
-                        }
-                    }
-                    SettingItem(
-                        title = stringResource(R.string.prefetch_scope),
-                        desc = prefetchScope.toDesc(context),
-                        onClick = { prefetchScopeDialogVisible = true },
-                    ) {}
-                    SettingItem(
-                        title = stringResource(R.string.image_cache_size),
-                        desc = imageCacheSize.toDesc(context),
-                        onClick = { imageCacheSizeDialogVisible = true },
-                    ) {}
-                    SettingItem(
-                        title = stringResource(R.string.download_now),
-                        desc =
-                            prefetchProgress?.let {
-                                stringResource(R.string.download_progress, it.current, it.total)
-                            }
-                                ?: lastPrefetchRun?.let {
-                                    if (it.interrupted)
-                                        stringResource(
-                                            R.string.download_interrupted,
-                                            it.current,
-                                            it.total,
-                                        )
-                                    else
-                                        stringResource(
-                                            R.string.download_summary,
-                                            it.ready,
-                                            it.textOnly,
-                                            it.failed,
-                                        )
-                                }
-                                ?: stringResource(R.string.download_now_desc),
-                        onClick = { prefetchViewModel.downloadNow() },
-                    ) {}
-                    SettingItem(
-                        title = stringResource(R.string.clear_archive),
-                        desc = stringResource(R.string.clear_archive_desc),
-                        onClick = { clearArchiveDialogVisible = true },
-                    ) {}
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    Subtitle(
-                        modifier = Modifier.padding(horizontal = 24.dp),
                         text = stringResource(R.string.external_links),
                     )
                     SettingItem(
@@ -353,66 +267,6 @@ fun InteractionPage(
             }
         }
     )
-
-    RYDialog(
-        visible = clearArchiveDialogVisible,
-        onDismissRequest = { clearArchiveDialogVisible = false },
-        icon = {
-            Icon(
-                imageVector = Icons.Outlined.DeleteSweep,
-                contentDescription = stringResource(R.string.clear_archive),
-            )
-        },
-        title = { Text(text = stringResource(R.string.clear_archive)) },
-        text = { Text(text = stringResource(R.string.clear_archive_tips)) },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    prefetchViewModel.clearArchive {
-                        clearArchiveDialogVisible = false
-                        context.showToast(context.getString(R.string.clear_archive_toast))
-                    }
-                }
-            ) {
-                Text(text = stringResource(R.string.clear))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = { clearArchiveDialogVisible = false }) {
-                Text(text = stringResource(R.string.cancel))
-            }
-        },
-    )
-
-    RadioDialog(
-        visible = prefetchScopeDialogVisible,
-        title = stringResource(R.string.prefetch_scope),
-        options = PrefetchScopePreference.values.map {
-            RadioDialogOption(
-                text = it.toDesc(context),
-                selected = it == prefetchScope,
-            ) {
-                it.put(context, scope)
-            }
-        },
-    ) {
-        prefetchScopeDialogVisible = false
-    }
-
-    RadioDialog(
-        visible = imageCacheSizeDialogVisible,
-        title = stringResource(R.string.image_cache_size),
-        options = ImageCacheSizePreference.values.map {
-            RadioDialogOption(
-                text = it.toDesc(context),
-                selected = it == imageCacheSize,
-            ) {
-                it.put(context, scope)
-            }
-        },
-    ) {
-        imageCacheSizeDialogVisible = false
-    }
 
     RadioDialog(
         visible = initialPageDialogVisible,

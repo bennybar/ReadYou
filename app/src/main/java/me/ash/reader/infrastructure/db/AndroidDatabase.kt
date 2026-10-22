@@ -109,6 +109,9 @@ object MIGRATION_9_10 : Migration(9, 10) {
                 "`content` TEXT NOT NULL, `variants` TEXT NOT NULL DEFAULT '', tokenize=unicode61, " +
                 "notindexed=`articleId`)"
         )
+        // The duplicate key now includes the URL's query string; recompute every key on the next
+        // sync, so stories it had wrongly collapsed (YouTube, ?id= links) come back.
+        db.execSQL("UPDATE `article` SET `dedupeKey` = NULL, `isDuplicate` = 0")
     }
 }
 

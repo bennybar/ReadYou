@@ -1121,6 +1121,9 @@ interface ArticleDao {
     )
     suspend fun markDuplicates(accountId: Int)
 
+    @Query("UPDATE article SET isDuplicate = 0 WHERE accountId = :accountId AND isDuplicate = 1")
+    suspend fun clearDuplicates(accountId: Int)
+
     @Query(
         """
         SELECT id FROM article

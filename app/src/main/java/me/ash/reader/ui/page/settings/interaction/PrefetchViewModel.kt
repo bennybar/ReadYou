@@ -52,6 +52,11 @@ constructor(
         ReaderWorker.enqueueOneTimeWork(workManager)
     }
 
+    /** Stops the run in progress; it is recorded as stopped, and the next one carries on. */
+    fun stop() {
+        workManager.cancelAllWorkByTag(SyncWorker.READER_TAG)
+    }
+
     /**
      * Deletes the offline copies: article text, images, and the search index built from that text,
      * which would otherwise keep finding articles whose text is no longer on the device.

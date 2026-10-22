@@ -1,5 +1,10 @@
 package me.ash.reader.ui.page.adaptive
 
+import me.ash.reader.infrastructure.preference.RefetchOnOpenPreference
+import dagger.hilt.android.qualifiers.ApplicationContext
+import androidx.core.content.getSystemService
+import android.net.ConnectivityManager
+import android.content.Context
 import android.net.Uri
 import androidx.compose.ui.util.fastFirstOrNull
 import androidx.lifecycle.ViewModel
@@ -59,6 +64,7 @@ private const val TAG = "FlowViewModel"
 class ArticleListReaderViewModel
 @Inject
 constructor(
+    @ApplicationContext private val context: Context,
     private val rssService: RssService,
     @IODispatcher private val ioDispatcher: CoroutineDispatcher,
     @ApplicationScope private val applicationScope: CoroutineScope,
@@ -361,6 +367,13 @@ constructor(
      */
     private fun refetchOnOpen(article: Article) {
         refetchOnOpenJob?.cancel()
+        when (settingsProvider.settings.refetchOnOpen) {
+            RefetchOnOpenPreference.Off -> return
+            RefetchOnOpenPreference.WiFiOnly ->
+                if (context.getSystemService<ConnectivityManager>()?.isActiveNetworkMetered != false)
+                    return
+            RefetchOnOpenPreference.Always -> Unit
+        }
         _isRefetchingOnOpen.value = true
         val job =
             viewModelScope.launch {
