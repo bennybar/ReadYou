@@ -1,5 +1,11 @@
 package me.ash.reader.ui.component
 
+import me.ash.reader.infrastructure.preference.LocalExpressiveStyle
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Box
 import android.os.Build
 import android.view.SoundEffectConstants
 import androidx.compose.foundation.background
@@ -39,6 +45,13 @@ fun FilterBar(
     filterOnClick: (Filter) -> Unit = {},
 ) {
     val view = LocalView.current
+    if (LocalExpressiveStyle.current.value) {
+        ExpressiveFilterBar(modifier, filter) {
+            view.playSoundEffect(SoundEffectConstants.CLICK)
+            filterOnClick(it)
+        }
+        return
+    }
     val themeIndex = LocalThemeIndex.current
     val indicatorColor = if (themeIndex == 5 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         MaterialTheme.colorScheme.secondaryContainer
@@ -114,6 +127,46 @@ fun FilterBar(
                 )
             }
             Spacer(modifier = Modifier.width(filterBarPadding))
+        }
+    }
+}
+
+/**
+ * A floating toolbar instead of a full-width bar: a light raised pill, the selected filter as a
+ * labelled pill in the primary color and the others as icons.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun ExpressiveFilterBar(modifier: Modifier, filter: Filter, onClick: (Filter) -> Unit) {
+    Box(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(NavigationBarDefaults.windowInsets)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        HorizontalFloatingToolbar(
+            expanded = true,
+            colors = FloatingToolbarDefaults.standardFloatingToolbarColors(),
+        ) {
+            Filter.values.forEach { item ->
+                if (item == filter) {
+                    Button(
+                        onClick = { onClick(item) },
+                        modifier = Modifier.semantics { selected = true },
+                        contentPadding = PaddingValues(horizontal = 16.dp),
+                    ) {
+                        Icon(imageVector = item.iconFilled, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(text = item.toName(), maxLines = 1)
+                    }
+                } else {
+                    IconButton(onClick = { onClick(item) }) {
+                        Icon(imageVector = item.iconOutline, contentDescription = item.toName())
+                    }
+                }
+            }
         }
     }
 }

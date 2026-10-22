@@ -1,5 +1,6 @@
 package me.ash.reader.ui.page.home.feeds
 
+import kotlinx.coroutines.flow.flatMapLatest
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.snapshots.SnapshotStateMap
@@ -91,6 +92,19 @@ class FeedsViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
+            accountFlow
+                .flatMapLatest {
+                    rssService.get().countStarred().combine(rssService.get().countReadLater()) {
+                        starred,
+                        readLater ->
+                        starred to readLater
+                    }
+                }
+                .collect { (starred, readLater) ->
+                    _feedsUiState.update { it.copy(starredCount = starred, readLaterCount = readLater) }
+                }
+        }
+        viewModelScope.launch {
             filterStateUseCase.filterStateFlow.mapLatest { it.filter }
                 .combine(accountFlow) { filter, account ->
                     filter
@@ -114,9 +128,9 @@ class FeedsViewModel @Inject constructor(
             launch {
                 articleCountMapFlow.mapLatest {
                     val sum = it.values.sum()
-                    androidStringsHelper.getQuantityString(R.plurals.all_desc, sum, sum)
-                }.flowOn(defaultDispatcher).collect { text ->
-                    _feedsUiState.update { it.copy(importantSum = text) }
+                    sum to androidStringsHelper.getQuantityString(R.plurals.all_desc, sum, sum)
+                }.flowOn(defaultDispatcher).collect { (sum, text) ->
+                    _feedsUiState.update { it.copy(importantSum = text, importantCount = sum) }
                 }
             }
         }
@@ -128,9 +142,9 @@ class FeedsViewModel @Inject constructor(
         return viewModelScope.launch {
             starredCountMap.mapLatest {
                 val sum = it.values.sum()
-                androidStringsHelper.getQuantityString(R.plurals.starred_desc, sum, sum)
-            }.flowOn(defaultDispatcher).collect { text ->
-                _feedsUiState.update { it.copy(importantSum = text) }
+                sum to androidStringsHelper.getQuantityString(R.plurals.starred_desc, sum, sum)
+            }.flowOn(defaultDispatcher).collect { (sum, text) ->
+                _feedsUiState.update { it.copy(importantSum = text, importantCount = sum) }
             }
         }
     }
@@ -147,13 +161,13 @@ class FeedsViewModel @Inject constructor(
                     val sum = unreadCountMap.values.sum()
                     val combinedSum =
                         sum + diffMap.values.sumOf { if (it.isUnread) 1.toInt() else -1 } // KT-46360
-                    androidStringsHelper.getQuantityString(
+                    combinedSum to androidStringsHelper.getQuantityString(
                         R.plurals.unread_desc,
                         combinedSum,
                         combinedSum
                     )
-                }.debounce(200L).flowOn(defaultDispatcher).collect { text ->
-                    _feedsUiState.update { it.copy(importantSum = text) }
+                }.debounce(200L).flowOn(defaultDispatcher).collect { (sum, text) ->
+                    _feedsUiState.update { it.copy(importantSum = text, importantCount = sum) }
                 }
         }
     }
@@ -218,6 +232,10 @@ class FeedsViewModel @Inject constructor(
 data class FeedsUiState(
     val account: Account? = null,
     val importantSum: String = "",
+    /** The number in [importantSum], for the expressive home cards. */
+    val importantCount: Int = 0,
+    val starredCount: Int = 0,
+    val readLaterCount: Int = 0,
     val listState: LazyListState = LazyListState(),
     val groupsVisible: SnapshotStateMap<String, Boolean> = mutableStateMapOf(),
 )

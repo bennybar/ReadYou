@@ -202,6 +202,7 @@ sealed interface PreferencesKey {
         const val collapseDuplicates = "collapseDuplicates"
         const val markDuplicatesRead = "markDuplicatesRead"
         const val readHistoryMonths = "readHistoryMonths"
+        const val expressiveStyle = "expressiveStyle"
         const val pullToLoadNextFeed = "pullToLoadNextFeed"
         const val pullToSwitchArticle = "pullToSwitchArticle"
         const val openLink = "openLink"
@@ -288,6 +289,7 @@ sealed interface PreferencesKey {
                 BooleanKey(collapseDuplicates),
                 BooleanKey(markDuplicatesRead),
                 IntKey(readHistoryMonths),
+                BooleanKey(expressiveStyle),
                 BooleanKey(pullToLoadNextFeed),
                 BooleanKey(pullToSwitchArticle),
                 IntKey(openLink),
@@ -384,6 +386,7 @@ data class DataStoreKey<T>(val key: Preferences.Key<T>, val type: Class<T>) {
         const val collapseDuplicates = "collapseDuplicates"
         const val markDuplicatesRead = "markDuplicatesRead"
         const val readHistoryMonths = "readHistoryMonths"
+        const val expressiveStyle = "expressiveStyle"
         const val pullToLoadNextFeed = "pullToLoadNextFeed"
         const val pullToSwitchArticle = "pullToSwitchArticle"
         const val openLink = "openLink"
@@ -549,6 +552,8 @@ data class DataStoreKey<T>(val key: Preferences.Key<T>, val type: Class<T>) {
                     DataStoreKey(booleanPreferencesKey(markDuplicatesRead), Boolean::class.java),
                 readHistoryMonths to
                     DataStoreKey(intPreferencesKey(readHistoryMonths), Int::class.java),
+                expressiveStyle to
+                    DataStoreKey(booleanPreferencesKey(expressiveStyle), Boolean::class.java),
                 pullToLoadNextFeed to
                     DataStoreKey(booleanPreferencesKey(pullToLoadNextFeed), Boolean::class.java),
                 pullToSwitchArticle to

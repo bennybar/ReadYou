@@ -1121,6 +1121,16 @@ interface ArticleDao {
     )
     suspend fun markDuplicates(accountId: Int)
 
+    @Query(
+        "SELECT COUNT(*) FROM article WHERE accountId = :accountId AND isDuplicate = 0 AND isStarred = 1"
+    )
+    fun countStarred(accountId: Int): Flow<Int>
+
+    @Query(
+        "SELECT COUNT(*) FROM article WHERE accountId = :accountId AND isDuplicate = 0 AND isReadLater = 1"
+    )
+    fun countReadLater(accountId: Int): Flow<Int>
+
     @Query("UPDATE article SET isDuplicate = 0 WHERE accountId = :accountId AND isDuplicate = 1")
     suspend fun clearDuplicates(accountId: Int)
 

@@ -1,5 +1,6 @@
 package me.ash.reader.ui.page.home.feeds
 
+import me.ash.reader.infrastructure.preference.LocalExpressiveStyle
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -118,6 +119,7 @@ fun FeedsPage(
 
     val feedsUiState = feedsViewModel.feedsUiState.collectAsStateValue()
     val filterState = feedsViewModel.filterStateFlow.collectAsStateValue()
+    val expressiveStyle = LocalExpressiveStyle.current
     val importantSum = feedsUiState.importantSum
     val groupWithFeedList = feedsViewModel.groupWithFeedsListFlow.collectAsStateValue()
     val groupsVisible: SnapshotStateMap<String, Boolean> = feedsUiState.groupsVisible
@@ -241,12 +243,27 @@ fun FeedsPage(
                         }
                     }
                     item {
-                        FeedsBanner(
-                            filter = filterState.filter,
-                            desc = importantSum.ifEmpty { stringResource(R.string.loading) },
-                        ) {
-                            feedsViewModel.changeFilter(filterState.copy(group = null, feed = null))
-                            navigationToFlow()
+                        if (expressiveStyle.value) {
+                            ExpressiveFilterCards(
+                                filter = filterState.filter,
+                                count = feedsUiState.importantCount,
+                                starredCount = feedsUiState.starredCount,
+                                readLaterCount = feedsUiState.readLaterCount,
+                                onOpen = {
+                                    feedsViewModel.changeFilter(
+                                        filterState.copy(filter = it, group = null, feed = null)
+                                    )
+                                    navigationToFlow()
+                                },
+                            )
+                        } else {
+                            FeedsBanner(
+                                filter = filterState.filter,
+                                desc = importantSum.ifEmpty { stringResource(R.string.loading) },
+                            ) {
+                                feedsViewModel.changeFilter(filterState.copy(group = null, feed = null))
+                                navigationToFlow()
+                            }
                         }
                     }
 

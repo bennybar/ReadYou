@@ -1,5 +1,8 @@
 package me.ash.reader.ui.component.base
 
+import me.ash.reader.infrastructure.preference.LocalExpressiveStyle
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -18,6 +21,7 @@ fun DisplayText(
     desc: String,
     onTextClick: (() -> Unit)? = null,
 ) {
+    val expressive = LocalExpressiveStyle.current.value
     Column(
         modifier =
             modifier
@@ -28,7 +32,13 @@ fun DisplayText(
         Text(
             modifier = Modifier,
             text = text,
-            style = MaterialTheme.typography.displaySmall,
+            style =
+                if (expressive)
+                    MaterialTheme.typography.displayMedium.copy(
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = (-1).sp,
+                    )
+                else MaterialTheme.typography.displaySmall,
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -36,8 +46,12 @@ fun DisplayText(
         RYExtensibleVisibility(visible = desc.isNotEmpty()) {
             Text(
                 text = desc,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.7f),
+                style =
+                    if (expressive) MaterialTheme.typography.bodyMedium
+                    else MaterialTheme.typography.labelMedium,
+                color =
+                    if (expressive) MaterialTheme.colorScheme.onSurfaceVariant
+                    else MaterialTheme.colorScheme.outline.copy(alpha = 0.7f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )

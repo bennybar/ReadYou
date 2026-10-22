@@ -453,6 +453,8 @@
         <item quantity="other">From the last %d months</item>
     </plurals>
     <string name="offline">Offline</string>
+    <string name="expressive_style">Expressive style</string>
+    <string name="expressive_style_desc">Material 3 Expressive: bolder type, tonal cards, floating toolbars</string>
     <string name="offline_sync_section">Syncing</string>
     <string name="offline_desc">Downloads, image archive, search</string>
     <string name="download_progress_stop">Downloading %1$d of %2$d… Tap to stop</string>

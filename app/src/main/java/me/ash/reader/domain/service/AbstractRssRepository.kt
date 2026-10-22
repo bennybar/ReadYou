@@ -309,6 +309,11 @@ abstract class AbstractRssRepository(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
+    fun countStarred(): Flow<Int> = articleDao.countStarred(accountService.getCurrentAccountId())
+
+    fun countReadLater(): Flow<Int> =
+        articleDao.countReadLater(accountService.getCurrentAccountId())
+
     fun pullImportant(isStarred: Boolean, isUnread: Boolean): Flow<Map<String, Int>> {
         val accountId = accountService.getCurrentAccountId()
         Log.i(

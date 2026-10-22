@@ -143,6 +143,7 @@ class SettingsProvider @Inject constructor(
             LocalCollapseDuplicates provides settings.collapseDuplicates,
             LocalMarkDuplicatesRead provides settings.markDuplicatesRead,
             LocalReadHistory provides settings.readHistory,
+            LocalExpressiveStyle provides settings.expressiveStyle,
             LocalPullToSwitchArticle provides settings.pullToSwitchArticle,
             LocalOpenLink provides settings.openLink,
             LocalOpenLinkSpecificBrowser provides settings.openLinkSpecificBrowser,

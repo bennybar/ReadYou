@@ -1,5 +1,6 @@
 package me.ash.reader.ui.page.settings.color
 
+import me.ash.reader.infrastructure.preference.LocalExpressiveStyle
 import android.content.Context
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -93,6 +94,7 @@ fun ColorAndStylePage(
     navigateToReadingPageStyle: () -> Unit,
 ) {
     val context = LocalContext.current
+    val expressiveStyle = LocalExpressiveStyle.current
     val darkTheme = LocalDarkTheme.current
     val darkThemeNot = !darkTheme
     val themeIndex = LocalThemeIndex.current
@@ -201,6 +203,15 @@ fun ColorAndStylePage(
                             activated = darkTheme.isDarkTheme()
                         ) {
                             darkThemeNot.put(context, scope)
+                        }
+                    }
+                    SettingItem(
+                        title = stringResource(R.string.expressive_style),
+                        desc = stringResource(R.string.expressive_style_desc),
+                        onClick = { expressiveStyle.toggle(context, scope) },
+                    ) {
+                        RYSwitch(activated = expressiveStyle.value) {
+                            expressiveStyle.toggle(context, scope)
                         }
                     }
                     SettingItem(
