@@ -1,5 +1,7 @@
 package me.ash.reader.domain.service
 
+import me.ash.reader.domain.data.TagEditOutbox
+import me.ash.reader.domain.data.PendingTagEdit
 import me.ash.reader.ui.ext.dataStore
 import me.ash.reader.infrastructure.preference.toSettings
 import kotlinx.coroutines.flow.first
@@ -80,6 +82,7 @@ constructor(
     private val workManager: WorkManager,
     private val accountService: AccountService,
     private val syncLogger: SyncLogger,
+    private val tagEditOutbox: TagEditOutbox,
 ) :
     AbstractRssRepository(
         articleDao,
@@ -270,6 +273,7 @@ constructor(
             }
             val googleReaderAPI = getGoogleReaderAPI()
             googleReaderAPI.refreshCredentialsIfNeeded()
+            flushTagEdits(accountId, googleReaderAPI)
             val readHistoryMonths = context.dataStore.data.first().toSettings().readHistory.months
             val lastMonthAt =
                 Calendar.getInstance()
@@ -828,15 +832,45 @@ constructor(
             ?.chunked(500)
             ?.forEachIndexed { index, it ->
                 Log.d("RLog", "sync markAsRead:  ${(index * 500) + it.size}/${markList.size} num")
-                googleReaderAPI.editTag(
-                    itemIds = it,
-                    mark = if (!isUnread) GoogleReaderAPI.Stream.Read.tag else null,
-                    unmark = if (isUnread) GoogleReaderAPI.Stream.Read.tag else null,
-                )
+                sendTagEdit(accountId, googleReaderAPI, it, GoogleReaderAPI.Stream.Read.tag, !isUnread)
+            }
+    }
+
+    /**
+     * Sends one change to the server, or queues it in [tagEditOutbox] when the server cannot be
+     * reached, to be sent at the start of the next sync. @return whether it reached the server.
+     */
+    private suspend fun sendTagEdit(
+        accountId: Int,
+        googleReaderAPI: GoogleReaderAPI,
+        itemIds: List<String>,
+        tag: String,
+        add: Boolean,
+    ): Boolean {
+        val sent =
+            googleReaderAPI
+                .editTag(itemIds = itemIds, mark = tag.takeIf { add }, unmark = tag.takeIf { !add })
+                .isSuccess
+        if (sent) tagEditOutbox.settled(accountId, itemIds, tag)
+        else tagEditOutbox.add(accountId, itemIds.map { PendingTagEdit(it, tag, add) })
+        return sent
+    }
+
+    /** Sends the changes queued while offline, before the sync takes the server's lists as truth. */
+    private suspend fun flushTagEdits(accountId: Int, googleReaderAPI: GoogleReaderAPI) {
+        tagEditOutbox
+            .pending(accountId)
+            .groupBy { it.tag to it.add }
+            .forEach { (key, edits) ->
+                val (tag, add) = key
+                edits.map { it.itemId }.chunked(500).forEach {
+                    sendTagEdit(accountId, googleReaderAPI, it, tag, add)
+                }
             }
     }
 
     override suspend fun syncReadStatus(articleIds: Set<String>, isUnread: Boolean): Set<String> {
+        val accountId = accountService.getCurrentAccountId()
         val googleReaderAPI = getGoogleReaderAPI()
         val syncedEntries = mutableSetOf<String>()
         articleIds
@@ -847,39 +881,39 @@ constructor(
                     "RLog",
                     "sync markAsRead:  ${(index * 500) + idList.size}/${articleIds.size} num",
                 )
-                googleReaderAPI
-                    .editTag(
-                        itemIds = idList.map { it.dollarLast() },
-                        mark = if (!isUnread) GoogleReaderAPI.Stream.Read.tag else null,
-                        unmark = if (isUnread) GoogleReaderAPI.Stream.Read.tag else null,
-                    )
-                    .onFailure { it.printStackTrace() }
-                    .onSuccess {
-                        syncedEntries += idList
-                        println("synced $idList to isUnread: $isUnread")
-                    }
+                sendTagEdit(
+                    accountId,
+                    googleReaderAPI,
+                    idList.map { it.dollarLast() },
+                    GoogleReaderAPI.Stream.Read.tag,
+                    !isUnread,
+                )
+                // Sent or queued in the outbox, either way it is no longer the caller's to retry.
+                syncedEntries += idList
             }
         return syncedEntries
     }
 
     override suspend fun markAsStarred(articleId: String, isStarred: Boolean) {
         super.markAsStarred(articleId, isStarred)
-        getGoogleReaderAPI()
-            .editTag(
-                itemIds = listOf(articleId.dollarLast()),
-                mark = if (isStarred) GoogleReaderAPI.Stream.Starred.tag else null,
-                unmark = if (!isStarred) GoogleReaderAPI.Stream.Starred.tag else null,
-            )
+        sendTagEdit(
+            accountService.getCurrentAccountId(),
+            getGoogleReaderAPI(),
+            listOf(articleId.dollarLast()),
+            GoogleReaderAPI.Stream.Starred.tag,
+            isStarred,
+        )
     }
 
     override suspend fun markAsReadLater(articleId: String, isReadLater: Boolean) {
         super.markAsReadLater(articleId, isReadLater)
-        getGoogleReaderAPI()
-            .editTag(
-                itemIds = listOf(articleId.dollarLast()),
-                mark = if (isReadLater) GoogleReaderAPI.Stream.ReadLater.tag else null,
-                unmark = if (!isReadLater) GoogleReaderAPI.Stream.ReadLater.tag else null,
-            )
+        sendTagEdit(
+            accountService.getCurrentAccountId(),
+            getGoogleReaderAPI(),
+            listOf(articleId.dollarLast()),
+            GoogleReaderAPI.Stream.ReadLater.tag,
+            isReadLater,
+        )
     }
 
     /** Pulls the Read Later label back down so the list follows the user across devices. */

@@ -671,7 +671,10 @@ fun FlowPage(
                             .also { currentPullToLoadState = it }
 
                     Box(modifier = Modifier.fillMaxSize()) {
-                        CompositionLocalProvider(LocalSearchHighlight provides searchHighlight) {
+                        CompositionLocalProvider(
+                            LocalSearchHighlight provides searchHighlight,
+                            LocalOfflineState provides viewModel::offlineState,
+                        ) {
                             LazyColumn(
                                 modifier =
                                     Modifier.pullToLoad(

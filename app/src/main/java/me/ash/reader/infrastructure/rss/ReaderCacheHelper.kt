@@ -27,6 +27,16 @@ enum class PrefetchResult {
     SKIPPED,
 }
 
+/** How much of an article is on the device, for the badge in the article list. */
+enum class OfflineState {
+    /** No saved full text; only what the feed itself delivered. */
+    NONE,
+    /** The full text is saved, but its images are not all cached. */
+    TEXT_ONLY,
+    /** The full text and every one of its images are saved. */
+    READY,
+}
+
 class ReaderCacheHelper
 @Inject
 constructor(
@@ -157,6 +167,22 @@ constructor(
                     }
                 currentCacheDir.mkdirs()
                 marker.writeText(contents)
+            }
+        }
+    }
+
+    /** File checks only: no reading the article, no network. */
+    suspend fun offlineState(articleId: String): OfflineState {
+        return withContext(ioDispatcher) {
+            when {
+                currentCacheDir.resolve(getFileNameFor(articleId)).length() == 0L -> OfflineState.NONE
+                runCatching {
+                        currentCacheDir.resolve(getImageMarkerFileNameFor(articleId)).useLines {
+                            it.firstOrNull()?.trim() == DONE_WITH_URLS
+                        }
+                    }
+                    .getOrDefault(false) -> OfflineState.READY
+                else -> OfflineState.TEXT_ONLY
             }
         }
     }

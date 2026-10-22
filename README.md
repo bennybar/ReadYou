@@ -19,11 +19,11 @@ ReadYou has felt close to abandoned over the last few months: its last release w
 
 ## At a glance
 
-- **Offline by default.** Full text and images for every feed, downloaded during sync, kept out of the system cache, and finished article by article.
+- **Built for offline.** Switch on *Full content for all feeds* and *Prefetch images* (*Settings → Offline*) and every feed's full text and images are downloaded during sync, kept out of the system cache, and finished article by article. A pin in the article list shows what is saved.
 - **Full-text search** across every article's body, Hebrew prefixes included, with the matches highlighted.
 - **Fresh on open.** Opening an article re-downloads it from the source behind the copy you are already reading.
 - **Right-to-left done properly.** Direction is decided by which script most of the text is in, in the lists and in every paragraph of the reader.
-- **Read Later, synced to FreshRSS**, and always kept offline.
+- **Read Later, synced to FreshRSS**, and always kept offline. Star, Read Later and read changes made offline are sent on the next sync instead of being lost.
 - **Duplicate stories collapsed.** The same article republished under several sections shows up once.
 - **The reader remembers where you stopped**, in each of the last 300 articles.
 - **You can see whether background sync works**: a sync log, a "Sync failed" label, and a one-tap battery exemption.
@@ -95,6 +95,7 @@ Both halves are settings (*Settings → Offline*): collapsing itself, and markin
 - A bookmark toggle in the reader and a dedicated **filter tab**.
 - Synced to FreshRSS as a label (`user/-/label/Read Later`) via the Google Reader `edit-tag` API, and pulled back on every sync, so the list follows you across devices. Like every read article, a read Read Later item only comes down to a new device if it is within *Read articles to fetch from FreshRSS* (1, 3 or 12 months).
 - **Always kept offline.** A Read Later article is downloaded even after you have read it, ahead of everything else, and *Keep archived articles* never deletes it.
+- **Changes made offline are not lost.** A star, Read Later or read change that cannot reach FreshRSS is kept in a small outbox on the device (it survives the app being closed) and sent at the start of the next sync, before the sync takes the server's lists as the truth. Previously such a change was sent once and forgotten, and the next sync quietly undid it.
 
 FreshRSS reports labels as `"type": "tag"` and folders as `"type": "folder"`, and groups are built from *feed* categories, so the label cannot show up as a bogus group.
 
@@ -104,6 +105,7 @@ FreshRSS reports labels as `"type": "tag"` and folders as `"type": "folder"`, an
 - **Pull down on an article to re-download it.** A failed refresh keeps the cached copy rather than dropping you onto an error screen. Pull-up still loads the next article.
 - **The reader remembers where you stopped** in each of the last 300 articles. The position is restored only once the page is tall enough to hold it, because the WebView grows as its images load.
 - **Remove read articles immediately**: in the Unread filter, an article leaves the list the moment it is read. Off by default. The article you are reading stays in the list until you close it, because the reader locates it by index to work out next and previous.
+- **A pin shows what is saved offline**: solid when the full text and all its images are on the device, faint when only the text is.
 - **List thumbnails skip decorations.** WordPress emoji, spacer GIFs and tracking pixels are no longer picked as an article's picture.
 
 ## Knowing that sync works

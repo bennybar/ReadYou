@@ -1,5 +1,7 @@
 package me.ash.reader.ui.page.home.flow
 
+import me.ash.reader.infrastructure.rss.OfflineState
+import androidx.compose.material.icons.rounded.OfflinePin
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -97,6 +99,9 @@ class SearchHighlight(val terms: List<String>, val snippet: suspend (articleId: 
 
 val LocalSearchHighlight = compositionLocalOf<SearchHighlight?> { null }
 
+/** Looks up how much of an article is saved on the device; null where no badge is wanted. */
+val LocalOfflineState = compositionLocalOf<(suspend (articleId: String) -> OfflineState)?> { null }
+
 /** [text] with every occurrence of the search words in bold, in any case. */
 private fun highlighted(text: String, terms: List<String>, color: Color): AnnotatedString =
     buildAnnotatedString {
@@ -138,12 +143,19 @@ fun ArticleItem(
         }
     }
 
+    val offlineLookup = LocalOfflineState.current
+    var offlineState by remember(article.id) { mutableStateOf(OfflineState.NONE) }
+    if (offlineLookup != null) {
+        LaunchedEffect(article.id) { offlineState = offlineLookup(article.id) }
+    }
+
     ArticleItem(
         modifier = modifier,
         feedName = feed.name,
         feedIconUrl = feed.icon,
         title = article.title,
         shortDescription = description,
+        offlineState = offlineState,
         highlightTerms = search?.terms.orEmpty(),
         timeString = article.dateString,
         imgData = article.img,
@@ -163,6 +175,7 @@ fun ArticleItem(
     title: String = "",
     shortDescription: String = "",
     highlightTerms: List<String> = emptyList(),
+    offlineState: OfflineState = OfflineState.NONE,
     timeString: String? = null,
     imgData: Any? = null,
     isStarred: Boolean = false,
@@ -221,6 +234,7 @@ fun ArticleItem(
                 )
 
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier) {
+                    OfflineIcon(offlineState)
                     // Starred
                     if (isStarred) {
                         StarredIcon()
@@ -248,6 +262,7 @@ fun ArticleItem(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.labelMedium,
                         )
+                        OfflineIcon(offlineState)
                         // Starred
                         if (isStarred) {
                             StarredIcon()
@@ -350,6 +365,28 @@ fun StarredIcon(modifier: Modifier = Modifier) {
         imageVector = Icons.Rounded.Star,
         contentDescription = stringResource(R.string.starred),
         tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+    )
+}
+
+/** A pin when the article can be read offline: solid with its images, faint for text only. */
+@Composable
+fun OfflineIcon(state: OfflineState, modifier: Modifier = Modifier) {
+    if (state == OfflineState.NONE) return
+    val fontSize = LocalTextStyle.current.fontSize
+    val iconSize = with(LocalDensity.current) { fontSize.toDp() }
+
+    Icon(
+        modifier = modifier.size(iconSize).padding(end = 2.dp),
+        imageVector = Icons.Rounded.OfflinePin,
+        contentDescription =
+            stringResource(
+                if (state == OfflineState.READY) R.string.available_offline
+                else R.string.text_only_offline
+            ),
+        tint =
+            MaterialTheme.colorScheme.onSurface.copy(
+                alpha = if (state == OfflineState.READY) 0.7f else 0.3f
+            ),
     )
 }
 

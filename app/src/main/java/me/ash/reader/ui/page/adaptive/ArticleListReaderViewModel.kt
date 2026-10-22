@@ -1,5 +1,6 @@
 package me.ash.reader.ui.page.adaptive
 
+import me.ash.reader.infrastructure.rss.OfflineState
 import me.ash.reader.infrastructure.preference.RefetchOnOpenPreference
 import dagger.hilt.android.qualifiers.ApplicationContext
 import androidx.core.content.getSystemService
@@ -265,6 +266,8 @@ constructor(
         )
     }
 
+    suspend fun offlineState(articleId: String): OfflineState = readerCacheHelper.offlineState(articleId)
+
     /** The words around a search match deep in an article, for its line in the results. */
     suspend fun searchSnippet(articleId: String, content: String): String? =
         withContext(ioDispatcher) { articleFtsDao.snippet(articleId, ftsMatchQuery(content)) }
@@ -290,23 +293,18 @@ constructor(
         viewModelScope.launch {
             val snapshotList = articleListUseCase.itemSnapshotList
 
-            val itemByIndex =
-                listIndex?.let { snapshotList.getOrNull(it) as? ArticleFlowItem.Article }
-
-            val itemFromList =
-                if (itemByIndex != null && itemByIndex.articleWithFeed.article.id != articleId) {
-                    itemByIndex
-                } else {
-                    snapshotList.find { item ->
-                        item is ArticleFlowItem.Article &&
-                            item.articleWithFeed.article.id == articleId
-                    } as? ArticleFlowItem.Article
-                }
-
+            // The index is only a shortcut, trusted when it still holds the requested article. With
+            // "remove read articles immediately" the list shifts up as each one is read, so the
+            // stored index of the next article pointed one past it, and pulling up skipped an
+            // article silently.
             val item =
-                itemByIndex?.articleWithFeed
-                    ?: (itemFromList?.articleWithFeed
-                        ?: rssService.get().findArticleById(articleId)!!)
+                (listIndex?.let { snapshotList.getOrNull(it) as? ArticleFlowItem.Article }
+                        ?.takeIf { it.articleWithFeed.article.id == articleId }
+                        ?: snapshotList.find { item ->
+                            item is ArticleFlowItem.Article &&
+                                item.articleWithFeed.article.id == articleId
+                        } as? ArticleFlowItem.Article)
+                    ?.articleWithFeed ?: rssService.get().findArticleById(articleId)!!
 
             // Register before marking it read: with "remove read immediately" on, the commit that
             // follows must not drop the article we are about to display out of the list.
