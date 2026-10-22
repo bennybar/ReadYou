@@ -1,5 +1,6 @@
 package me.ash.reader.ui.page.home.flow
 
+import androidx.compose.runtime.CompositionLocalProvider
 import me.ash.reader.infrastructure.preference.LocalExpressiveStyle
 import androidx.compose.foundation.shape.RoundedCornerShape
 import me.ash.reader.infrastructure.rss.OfflineState
@@ -96,10 +97,18 @@ import me.ash.reader.ui.theme.palette.onDark
 
 private const val TAG = "ArticleItem"
 
+private val ArticleCardShape = RoundedCornerShape(26.dp)
+
 /** The words of the current search, and where to find the text around a match in the body. */
 class SearchHighlight(val terms: List<String>, val snippet: suspend (articleId: String) -> String?)
 
 val LocalSearchHighlight = compositionLocalOf<SearchHighlight?> { null }
+
+/**
+ * Set by [SwipeableArticleItem] when it has given the card its margin and rounded corners itself,
+ * so the swipe background behind it takes the same shape; the card then only paints its fill.
+ */
+private val LocalCardFramedOutside = compositionLocalOf { false }
 
 /** Looks up how much of an article is saved on the device; null where no badge is wanted. */
 val LocalOfflineState = compositionLocalOf<(suspend (articleId: String) -> OfflineState)?> { null }
@@ -192,18 +201,22 @@ fun ArticleItem(
     val articleListDate = LocalFlowArticleListTime.current
     val articleListReadIndicator = LocalFlowArticleListReadIndicator.current
     val expressive = LocalExpressiveStyle.current.value
+    val framedOutside = LocalCardFramedOutside.current
 
     Column(
         modifier =
             modifier
-                .padding(horizontal = 12.dp)
                 .then(
-                    // Each article its own tonal card, a little apart from the next.
-                    if (expressive)
-                        Modifier.padding(vertical = 4.dp)
-                            .clip(RoundedCornerShape(26.dp))
-                            .background(MaterialTheme.colorScheme.surfaceContainerLow)
-                    else Modifier.clip(Shape20)
+                    when {
+                        expressive && framedOutside ->
+                            Modifier.background(MaterialTheme.colorScheme.surfaceContainerLow)
+                        // Each article its own tonal card, a little apart from the next.
+                        expressive ->
+                            Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                                .clip(ArticleCardShape)
+                                .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                        else -> Modifier.padding(horizontal = 12.dp).clip(Shape20)
+                    }
                 )
                 .combinedClickable(onClick = onClick, onLongClick = onLongClick)
                 .padding(horizontal = 12.dp, vertical = 12.dp)
@@ -457,8 +470,15 @@ fun SwipeableArticleItem(
             null
         }
     var menuOffset by remember { mutableStateOf(IntOffset.Zero) }
+    val expressive = LocalExpressiveStyle.current.value
 
     SwipeActionBox(
+        // In the expressive style the swipe area takes the card's margin and corners, so the
+        // color revealed behind a swiped card has its shape instead of square full-width edges.
+        modifier =
+            if (expressive)
+                Modifier.padding(horizontal = 12.dp, vertical = 4.dp).clip(ArticleCardShape)
+            else Modifier,
         articleWithFeed = articleWithFeed,
         isRead = !isUnread,
         isStarred = articleWithFeed.article.isStarred,
@@ -484,12 +504,14 @@ fun SwipeableArticleItem(
                     )
                     .wrapContentSize()
         ) {
-            ArticleItem(
-                articleWithFeed = articleWithFeed,
-                isUnread = isUnread,
-                onClick = onClick,
-                onLongClick = onLongClick,
-            )
+            CompositionLocalProvider(LocalCardFramedOutside provides expressive) {
+                ArticleItem(
+                    articleWithFeed = articleWithFeed,
+                    isUnread = isUnread,
+                    onClick = onClick,
+                    onLongClick = onLongClick,
+                )
+            }
             with(articleWithFeed.article) {
                 if (isMenuEnabled) {
                     AnimatedDropdownMenu(
@@ -552,7 +574,7 @@ private fun SwipeActionBox(
         }
 
     if (onSwipeStartToEnd == null && onSwipeEndToStart == null) {
-        content()
+        Box(modifier) { content() }
         return
     }
 
