@@ -56,6 +56,14 @@ class Release(val version: String, val date: String, val highlights: List<String
 val CHANGELOG =
     listOf(
         Release(
+            "0.26.1",
+            "Oct 22, 2026",
+            listOf(
+                "A more refined bottom toolbar: a fine outline and soft shadow, even buttons, and a softer selected filter",
+                "A clearer Unread icon",
+            ),
+        ),
+        Release(
             "0.26.0",
             "Oct 22, 2026",
             listOf(
