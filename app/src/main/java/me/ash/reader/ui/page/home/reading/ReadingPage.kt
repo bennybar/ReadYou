@@ -1,5 +1,8 @@
 package me.ash.reader.ui.page.home.reading
 
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import me.ash.reader.infrastructure.preference.LocalExpressiveStyle
+import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.padding
@@ -67,7 +70,7 @@ import me.ash.reader.ui.page.home.reading.tts.TtsButton
 private const val UPWARD = 1
 private const val DOWNWARD = -1
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ReadingPage(
     //    navController: NavHostController,
@@ -311,20 +314,23 @@ fun ReadingPage(
                                         if (isRefetchingOnOpen) {
                                             val refreshing =
                                                 stringResource(R.string.refreshing_article)
-                                            LinearProgressIndicator(
-                                                modifier =
-                                                    Modifier.align(Alignment.TopCenter)
-                                                        .padding(
-                                                            top =
-                                                                paddings.calculateTopPadding() +
-                                                                    64.dp
-                                                        )
-                                                        .fillMaxWidth()
-                                                        .height(2.dp)
-                                                        .semantics {
-                                                            contentDescription = refreshing
-                                                        }
-                                            )
+                                            val indicatorModifier =
+                                                Modifier.align(Alignment.TopCenter)
+                                                    .padding(
+                                                        top = paddings.calculateTopPadding() + 64.dp
+                                                    )
+                                                    .fillMaxWidth()
+                                                    .semantics { contentDescription = refreshing }
+                                            if (LocalExpressiveStyle.current.value) {
+                                                LinearWavyProgressIndicator(
+                                                    modifier =
+                                                        indicatorModifier.padding(horizontal = 16.dp)
+                                                )
+                                            } else {
+                                                LinearProgressIndicator(
+                                                    modifier = indicatorModifier.height(2.dp)
+                                                )
+                                            }
                                         }
                                     }
                                 }

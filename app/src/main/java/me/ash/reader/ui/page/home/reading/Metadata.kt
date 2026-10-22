@@ -1,5 +1,6 @@
 package me.ash.reader.ui.page.home.reading
 
+import me.ash.reader.infrastructure.preference.LocalExpressiveStyle
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -46,6 +47,7 @@ fun Metadata(
 
     val labelColor = MaterialTheme.colorScheme.outline.copy(alpha = .7f)
 
+    val expressive = LocalExpressiveStyle.current.value
     Column(
         modifier =
             modifier
@@ -68,7 +70,13 @@ fun Metadata(
                 MaterialTheme.typography.headlineLarge
                     .merge(
                         fontFamily = fontFamily,
-                        fontWeight = if (titleBold.value) FontWeight.Bold else FontWeight.Medium,
+                        fontWeight =
+                            when {
+                                expressive && titleBold.value -> FontWeight.ExtraBold
+                                expressive -> FontWeight.SemiBold
+                                titleBold.value -> FontWeight.Bold
+                                else -> FontWeight.Medium
+                            },
                     )
                     .applyTextDirection(isRtl = title.isRtl()),
             textAlign = titleAlign,

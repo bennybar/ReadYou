@@ -1,5 +1,16 @@
 package me.ash.reader.ui.page.home.reading
 
+import me.ash.reader.infrastructure.preference.LocalExpressiveStyle
+import androidx.compose.material3.Text
+import androidx.compose.material3.Icon
+import androidx.compose.material3.HorizontalFloatingToolbar
+import androidx.compose.material3.FloatingToolbarDefaults
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.IconToggleButton
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Button
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.padding
 import android.view.HapticFeedbackConstants
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.spring
@@ -80,6 +91,23 @@ fun BottomBar(
             exit = shrinkVertically(shrinkTowards = Alignment.Top, animationSpec = sizeSpec)
         ) {
             val view = LocalView.current
+            if (LocalExpressiveStyle.current.value) {
+                ExpressiveBottomBar(
+                    isUnread = isUnread,
+                    isStarred = isStarred,
+                    isReadLater = isReadLater,
+                    isNextArticleAvailable = isNextArticleAvailable,
+                    isFullContent = isFullContent,
+                    ttsButton = ttsButton,
+                    onToggle = { view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP) },
+                    onUnread = onUnread,
+                    onStarred = onStarred,
+                    onReadLater = onReadLater,
+                    onNextArticle = onNextArticle,
+                    onFullContent = onFullContent,
+                )
+                return@AnimatedVisibility
+            }
             Column {
                 if (isOutlined) {
                     HorizontalDivider(
@@ -185,6 +213,118 @@ fun BottomBar(
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * The expressive style's reading toolbar: a floating toolbar in light tonal colors, where a toggle
+ * that is on gets a tonal fill, beside a large "Next" button, the one strong accent.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun ExpressiveBottomBar(
+    isUnread: Boolean,
+    isStarred: Boolean,
+    isReadLater: Boolean,
+    isNextArticleAvailable: Boolean,
+    isFullContent: Boolean,
+    ttsButton: @Composable () -> Unit,
+    onToggle: () -> Unit,
+    onUnread: (Boolean) -> Unit,
+    onStarred: (Boolean) -> Unit,
+    onReadLater: (Boolean) -> Unit,
+    onNextArticle: () -> Unit,
+    onFullContent: (Boolean) -> Unit,
+) {
+    Row(
+        modifier =
+            Modifier.fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        // Off: just the icon. On: a tonal fill, so it reads as selected at a glance.
+        val toggleColors =
+            IconButtonDefaults.iconToggleButtonColors(
+                checkedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                checkedContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+            )
+        HorizontalFloatingToolbar(
+            expanded = true,
+            colors = FloatingToolbarDefaults.standardFloatingToolbarColors(),
+        ) {
+            IconToggleButton(
+                colors = toggleColors,
+                checked = isUnread,
+                onCheckedChange = {
+                    onToggle()
+                    onUnread(it)
+                },
+            ) {
+                Icon(
+                    imageVector =
+                        if (isUnread) Icons.Filled.FiberManualRecord else Icons.Outlined.FiberManualRecord,
+                    contentDescription =
+                        stringResource(if (isUnread) R.string.mark_as_read else R.string.mark_as_unread),
+                )
+            }
+            IconToggleButton(
+                colors = toggleColors,
+                checked = isStarred,
+                onCheckedChange = {
+                    onToggle()
+                    onStarred(it)
+                },
+            ) {
+                Icon(
+                    imageVector = if (isStarred) Icons.Rounded.Star else Icons.Rounded.StarOutline,
+                    contentDescription =
+                        stringResource(if (isStarred) R.string.mark_as_unstar else R.string.mark_as_starred),
+                )
+            }
+            IconToggleButton(
+                colors = toggleColors,
+                checked = isReadLater,
+                onCheckedChange = {
+                    onToggle()
+                    onReadLater(it)
+                },
+            ) {
+                Icon(
+                    imageVector = if (isReadLater) Icons.Rounded.Bookmark else Icons.Rounded.BookmarkBorder,
+                    contentDescription = stringResource(R.string.read_later),
+                )
+            }
+            ttsButton()
+            IconToggleButton(
+                colors = toggleColors,
+                checked = isFullContent,
+                onCheckedChange = {
+                    onToggle()
+                    onFullContent(it)
+                },
+            ) {
+                Icon(
+                    imageVector =
+                        if (isFullContent) Icons.AutoMirrored.Rounded.Article
+                        else Icons.AutoMirrored.Outlined.Article,
+                    contentDescription = stringResource(R.string.parse_full_content),
+                )
+            }
+        }
+        Button(
+            onClick = {
+                onToggle()
+                onNextArticle()
+            },
+            enabled = isNextArticleAvailable,
+            modifier = Modifier.height(56.dp),
+            shape = RoundedCornerShape(20.dp),
+        ) {
+            Text(text = stringResource(R.string.next))
+            Icon(imageVector = Icons.Rounded.ExpandMore, contentDescription = null)
         }
     }
 }
