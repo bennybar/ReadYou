@@ -34,6 +34,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -85,6 +92,28 @@ import me.ash.reader.ui.theme.palette.onDark
 
 private const val TAG = "ArticleItem"
 
+/** The words of the current search, and where to find the text around a match in the body. */
+class SearchHighlight(val terms: List<String>, val snippet: suspend (articleId: String) -> String?)
+
+val LocalSearchHighlight = compositionLocalOf<SearchHighlight?> { null }
+
+/** [text] with every occurrence of the search words in bold, in any case. */
+private fun highlighted(text: String, terms: List<String>, color: Color): AnnotatedString =
+    buildAnnotatedString {
+        append(text)
+        terms.forEach { term ->
+            var from = text.indexOf(term, ignoreCase = true)
+            while (from >= 0) {
+                addStyle(
+                    SpanStyle(fontWeight = FontWeight.Bold, color = color),
+                    from,
+                    from + term.length,
+                )
+                from = text.indexOf(term, from + term.length, ignoreCase = true)
+            }
+        }
+    }
+
 @Composable
 fun ArticleItem(
     modifier: Modifier = Modifier,
@@ -96,12 +125,26 @@ fun ArticleItem(
     val feed = articleWithFeed.feed
     val article = articleWithFeed.article
 
+    // In search results, a match only deep inside the body would leave the title and preview
+    // with nothing to show for it, so the preview becomes the text around the match.
+    val search = LocalSearchHighlight.current
+    var description by remember(article.id, search) { mutableStateOf(article.shortDescription) }
+    if (search != null) {
+        LaunchedEffect(article.id, search) {
+            val shown = "${article.title} ${article.shortDescription}"
+            if (search.terms.none { shown.contains(it, ignoreCase = true) }) {
+                search.snippet(article.id)?.takeIf { it.isNotBlank() }?.let { description = it }
+            }
+        }
+    }
+
     ArticleItem(
         modifier = modifier,
         feedName = feed.name,
         feedIconUrl = feed.icon,
         title = article.title,
-        shortDescription = article.shortDescription,
+        shortDescription = description,
+        highlightTerms = search?.terms.orEmpty(),
         timeString = article.dateString,
         imgData = article.img,
         isStarred = article.isStarred,
@@ -119,6 +162,7 @@ fun ArticleItem(
     feedIconUrl: String? = null,
     title: String = "",
     shortDescription: String = "",
+    highlightTerms: List<String> = emptyList(),
     timeString: String? = null,
     imgData: Any? = null,
     isStarred: Boolean = false,
@@ -230,7 +274,7 @@ fun ArticleItem(
                 // Title
                 Row {
                     Text(
-                        text = title,
+                        text = highlighted(title, highlightTerms, MaterialTheme.colorScheme.primary),
                         color = MaterialTheme.colorScheme.onSurface,
                         style =
                             MaterialTheme.typography.titleMedium
@@ -257,7 +301,12 @@ fun ArticleItem(
                 ) {
                     Text(
                         modifier = Modifier.padding(top = 4.dp),
-                        text = shortDescription,
+                        text =
+                            highlighted(
+                                shortDescription,
+                                highlightTerms,
+                                MaterialTheme.colorScheme.primary,
+                            ),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style =
                             MaterialTheme.typography.bodySmall.applyTextDirection(

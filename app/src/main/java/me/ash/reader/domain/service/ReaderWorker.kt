@@ -43,6 +43,7 @@ constructor(
     private val rssService: RssService,
     private val cacheHelper: ReaderCacheHelper,
     private val articleFtsDao: ArticleFtsDao,
+    private val articleIndexer: ArticleIndexer,
     private val imageLoader: ImageLoader,
     private val prefetchSummaryStore: PrefetchSummary.Store,
 ) : CoroutineWorker(context, workerParams) {
@@ -153,9 +154,8 @@ constructor(
         val fetch = if (fullContent) cacheHelper.checkOrFetchFullContent(article) else null
         if (fetch == PrefetchResult.FAILED) retryableFailures.incrementAndGet()
 
-        // An article fetched just now was indexed (if at all) from the feed's summary, so its
-        // index entry has to be rebuilt from the full text.
-        val needsIndexing = fetch == PrefetchResult.FETCHED || !alreadyIndexed
+        // A full text fetched just now was indexed when it was saved.
+        val needsIndexing = !alreadyIndexed
         val needsImages = prefetchImages && !cacheHelper.hasPrefetchedImages(article.id)
 
         // An article that is already indexed and whose images are already cached costs nothing
@@ -163,7 +163,7 @@ constructor(
         var imagesCached = !prefetchImages || !needsImages
         if (needsIndexing || needsImages) {
             val html = cacheHelper.readFullContent(article.id).getOrNull() ?: article.rawDescription
-            if (needsIndexing) indexForSearch(article, html)
+            if (needsIndexing) articleIndexer.index(article, html)
             if (needsImages) {
                 imagesCached = prefetchImagesFor(article, html)
                 cacheHelper.recordImagePrefetch(articleId = article.id, success = imagesCached)
@@ -184,11 +184,6 @@ constructor(
             .chunked(SQLITE_VARIABLE_LIMIT)
             .flatMap { articleFtsDao.queryIndexedIds(it) }
             .toSet()
-
-    private suspend fun indexForSearch(article: Article, html: String) {
-        val body = if (html.isBlank()) "" else Jsoup.parse(html).text()
-        articleFtsDao.upsert(articleId = article.id, content = "${article.title}\n$body")
-    }
 
     /** @return true when every image was cached, so the article never has to be scanned again. */
     private suspend fun prefetchImagesFor(article: Article, html: String): Boolean {

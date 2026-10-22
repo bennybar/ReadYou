@@ -45,7 +45,7 @@ class ReaderCacheHelperTest {
         }
         val accountService = mock<AccountService> { on { getCurrentAccountId() } doReturn 1 }
         rssHelper = mock()
-        helper = ReaderCacheHelper(context, Dispatchers.Unconfined, rssHelper, accountService)
+        helper = ReaderCacheHelper(context, Dispatchers.Unconfined, rssHelper, accountService, mock())
     }
 
     @After

@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 import me.ash.reader.domain.data.PrefetchSummary
 import me.ash.reader.domain.repository.ArticleFtsDao
 import me.ash.reader.domain.service.AccountService
+import me.ash.reader.domain.service.ArticleIndexer
 import me.ash.reader.domain.service.ReaderWorker
 import me.ash.reader.domain.service.SyncWorker
 import me.ash.reader.infrastructure.rss.ReaderCacheHelper
@@ -31,6 +32,7 @@ constructor(
     private val imageLoader: ImageLoader,
     private val articleFtsDao: ArticleFtsDao,
     private val accountService: AccountService,
+    private val articleIndexer: ArticleIndexer,
 ) : ViewModel() {
 
     val progress: StateFlow<PrefetchSummary?> =
@@ -64,7 +66,11 @@ constructor(
             }
             cacheHelper.clearCache()
             imageLoader.diskCache?.clear()
-            articleFtsDao.deleteByAccount("${accountService.getCurrentAccountId()}\$")
+            val accountId = accountService.getCurrentAccountId()
+            articleFtsDao.deleteByAccount("$accountId\$")
+            // The saved text is gone, but the articles are still here and still searchable by
+            // their own feed text.
+            articleIndexer.indexNewArticles(accountId) { null }
             summaryStore.save(null)
             launch(Dispatchers.Main) { onDone() }
         }

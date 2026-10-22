@@ -20,7 +20,7 @@ ReadYou has felt close to abandoned over the last few months: its last release w
 ## At a glance
 
 - **Offline by default.** Full text and images for every feed, downloaded during sync, kept out of the system cache, and finished article by article.
-- **Full-text search** across article bodies, not just titles.
+- **Full-text search** across every article's body, Hebrew prefixes included, with the matches highlighted.
 - **Fresh on open.** Opening an article re-downloads it from the source behind the copy you are already reading.
 - **Right-to-left done properly.** Direction is decided by which script most of the text is in, in the lists and in every paragraph of the reader.
 - **Read Later, synced to FreshRSS**, and always kept offline.
@@ -56,7 +56,13 @@ Prefetch is **incremental**: once an article's text is cached, its images are do
 
 ReadYou searched with `LIKE` over the title, a 280-character preview, and a column that is never populated. **In practice it searched titles plus the first 280 characters of each article, and nothing else.**
 
-Article bodies are indexed into an **FTS4 table** and every search goes through it, so you can find a word that appears only deep inside an article. Query text is sanitised, so input like `c++` or `foo:bar` no longer throws a malformed-`MATCH` exception.
+Here every article is indexed into an **FTS4 table** and every search goes through it:
+
+- **Everything is indexed as it arrives**, after each sync and when you subscribe to a feed, from the saved full text when there is one and the feed's own text otherwise. When a full text is downloaded later, by the reader or the offline downloader, the article is re-indexed from it.
+- **Hebrew prefixes are understood.** Hebrew attaches "and", "the", "in", "to", "from", "that" and "as" to the next word, so each such word is also indexed without up to two prefix letters: searching "ממשלה" finds "והממשלה".
+- **Words split on all Unicode punctuation** (the `unicode61` tokenizer), so a word next to a curly quote or an em dash is still found.
+- **Results show why they matched**: the search words are highlighted, and when the match is only deep inside the article, its preview line becomes the text around the match.
+- Query text is sanitised, so input like `c++` or `foo:bar` does not throw a malformed-`MATCH` exception, and the internal article id is not searchable, so searching "2" finds articles that say "2", not every article.
 
 ## Right-to-left text
 

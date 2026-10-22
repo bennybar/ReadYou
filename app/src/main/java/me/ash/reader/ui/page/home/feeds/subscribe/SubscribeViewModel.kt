@@ -16,6 +16,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import me.ash.reader.domain.service.ArticleIndexer
+import me.ash.reader.infrastructure.rss.ReaderCacheHelper
 import me.ash.reader.R
 import me.ash.reader.domain.model.group.Group
 import me.ash.reader.domain.service.AccountService
@@ -35,7 +37,9 @@ constructor(
     private val rssHelper: RssHelper,
     private val androidStringsHelper: AndroidStringsHelper,
     @ApplicationScope private val applicationScope: CoroutineScope,
-    accountService: AccountService,
+    private val accountService: AccountService,
+    private val articleIndexer: ArticleIndexer,
+    private val readerCacheHelper: ReaderCacheHelper,
 ) : ViewModel() {
 
     private val _subscribeUiState = MutableStateFlow(SubscribeUiState())
@@ -204,6 +208,10 @@ constructor(
                     isBrowser = state.browser,
                 )
             hideDrawer()
+            // A new feed's first articles arrive here rather than through a sync.
+            articleIndexer.indexNewArticles(accountService.getCurrentAccountId()) {
+                readerCacheHelper.readFullContent(it).getOrNull()
+            }
         }
     }
 

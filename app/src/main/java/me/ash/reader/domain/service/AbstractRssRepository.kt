@@ -17,6 +17,7 @@ import me.ash.reader.domain.model.article.ArchivedArticle
 import me.ash.reader.domain.model.article.Article
 import me.ash.reader.domain.model.article.ArticleWithFeed
 import me.ash.reader.domain.model.article.dedupeKeyOf
+import me.ash.reader.domain.model.article.ftsMatchQuery
 import me.ash.reader.domain.model.feed.Feed
 import me.ash.reader.domain.model.group.Group
 import me.ash.reader.domain.model.group.GroupWithFeed
@@ -449,7 +450,7 @@ abstract class AbstractRssRepository(
             "RLog",
             "searchArticles: content: ${content}, accountId: ${accountId}, groupId: ${groupId}, feedId: ${feedId}, isStarred: ${isStarred}, isUnread: ${isUnread}",
         )
-        val ftsQuery = toFtsMatchQuery(content)
+        val ftsQuery = ftsMatchQuery(content)
         return when {
             groupId != null ->
                 when {
@@ -530,22 +531,6 @@ abstract class AbstractRssRepository(
         }
     }
 
-    /**
-     * Turns raw user input into a safe FTS4 MATCH expression.
-     *
-     * Typed text goes straight into MATCH, and FTS treats characters like `"`, `*`, `:`, `-` and
-     * the words AND/OR/NOT as operators — so a search for `c++` or `foo:bar` would throw a
-     * malformed-MATCH exception instead of returning results. Keep only letters and digits, and
-     * make the final token a prefix so results narrow as the user types.
-     */
-    private fun toFtsMatchQuery(content: String): String {
-        val tokens = content.split(Regex("[^\\p{L}\\p{N}]+")).filter { it.isNotEmpty() }
-        // MATCH has no "match everything" expression, so fall back to something no article
-        // contains rather than letting SQLite reject an empty query.
-        if (tokens.isEmpty()) return NO_FTS_MATCH
-        return tokens.mapIndexed { i, t -> if (i == tokens.lastIndex) "$t*" else t }
-            .joinToString(" ")
-    }
 
     /**
      * Collapses the same story arriving more than once.
@@ -591,9 +576,4 @@ abstract class AbstractRssRepository(
             includeStarred = scope.includeStarred,
             includeAll = scope.includeAll,
         )
-
-    companion object {
-        // Only reached when the query is all punctuation ("!!!"); callers skip blank searches.
-        private const val NO_FTS_MATCH = "zzzznomatchzzzz4f2a1"
-    }
 }

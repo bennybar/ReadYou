@@ -46,6 +46,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -71,6 +72,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
+import me.ash.reader.domain.model.article.searchTerms
 import me.ash.reader.R
 import me.ash.reader.domain.data.PagerData
 import me.ash.reader.domain.model.article.ArticleFlowItem
@@ -148,6 +150,14 @@ fun FlowPage(
     val pagerData: PagerData = flowUiState.pagerData
 
     val filterUiState = pagerData.filterState
+    val searchHighlight =
+        remember(filterUiState.searchContent) {
+            filterUiState.searchContent
+                ?.takeIf { it.isNotBlank() }
+                ?.let { content ->
+                    SearchHighlight(searchTerms(content)) { viewModel.searchSnippet(it, content) }
+                }
+        }
 
     val listState = rememberSaveable(pagerData, saver = LazyListState.Saver) { LazyListState(0, 0) }
 
@@ -661,69 +671,71 @@ fun FlowPage(
                             .also { currentPullToLoadState = it }
 
                     Box(modifier = Modifier.fillMaxSize()) {
-                        LazyColumn(
-                            modifier =
-                                Modifier.pullToLoad(
-                                        state = pullToLoadState,
-                                        enabled = true,
-                                        contentOffsetY = { fraction ->
-                                            if (fraction > 0f) {
-                                                (fraction * ContentOffsetMultiple * 1.5f)
-                                                    .dp
-                                                    .roundToPx()
-                                            } else {
-                                                (fraction * ContentOffsetMultiple * 2f)
-                                                    .dp
-                                                    .roundToPx()
-                                            }
-                                        },
-                                        onScroll = {
-                                            if (it < -10f) {
-                                                markAsRead = false
-                                            }
-                                        },
-                                    )
-                                    .nestedScroll(scrollBehavior.nestedScrollConnection)
-                                    .fillMaxSize()
-                                    .drawVerticalScrollIndicator(listState),
-                            state = listState,
-                        ) {
-                            ArticleList(
-                                pagingItems = pagingItems,
-                                diffMap = viewModel.diffMapHolder.diffMap,
-                                isShowFeedIcon = articleListFeedIcon.value,
-                                isShowStickyHeader = articleListDateStickyHeader.value,
-                                articleListTonalElevation = articleListTonalElevation.value,
-                                isSwipeEnabled = { listState.isScrollInProgress },
-                                onClick = { articleWithFeed, index ->
-                                    if (articleWithFeed.feed.isBrowser) {
-                                        viewModel.diffMapHolder.updateDiff(
-                                            articleWithFeed,
-                                            isUnread = false,
+                        CompositionLocalProvider(LocalSearchHighlight provides searchHighlight) {
+                            LazyColumn(
+                                modifier =
+                                    Modifier.pullToLoad(
+                                            state = pullToLoadState,
+                                            enabled = true,
+                                            contentOffsetY = { fraction ->
+                                                if (fraction > 0f) {
+                                                    (fraction * ContentOffsetMultiple * 1.5f)
+                                                        .dp
+                                                        .roundToPx()
+                                                } else {
+                                                    (fraction * ContentOffsetMultiple * 2f)
+                                                        .dp
+                                                        .roundToPx()
+                                                }
+                                            },
+                                            onScroll = {
+                                                if (it < -10f) {
+                                                    markAsRead = false
+                                                }
+                                            },
                                         )
-                                        context.openURL(
-                                            articleWithFeed.article.link,
-                                            openLink,
-                                            openLinkSpecificBrowser,
-                                        )
-                                    } else {
-                                        navigateToArticle(articleWithFeed.article.id, index)
-                                    }
-                                },
-                                onToggleStarred = onToggleStarred,
-                                onToggleRead = onToggleRead,
-                                onMarkAboveAsRead = onMarkAboveAsRead,
-                                onMarkBelowAsRead = onMarkBelowAsRead,
-                                onShare = onShare,
-                            )
-                            item {
-                                Spacer(modifier = Modifier.height(128.dp))
-                                Spacer(
-                                    modifier =
-                                        Modifier.windowInsetsBottomHeight(
-                                            WindowInsets.navigationBars
-                                        )
+                                        .nestedScroll(scrollBehavior.nestedScrollConnection)
+                                        .fillMaxSize()
+                                        .drawVerticalScrollIndicator(listState),
+                                state = listState,
+                            ) {
+                                ArticleList(
+                                    pagingItems = pagingItems,
+                                    diffMap = viewModel.diffMapHolder.diffMap,
+                                    isShowFeedIcon = articleListFeedIcon.value,
+                                    isShowStickyHeader = articleListDateStickyHeader.value,
+                                    articleListTonalElevation = articleListTonalElevation.value,
+                                    isSwipeEnabled = { listState.isScrollInProgress },
+                                    onClick = { articleWithFeed, index ->
+                                        if (articleWithFeed.feed.isBrowser) {
+                                            viewModel.diffMapHolder.updateDiff(
+                                                articleWithFeed,
+                                                isUnread = false,
+                                            )
+                                            context.openURL(
+                                                articleWithFeed.article.link,
+                                                openLink,
+                                                openLinkSpecificBrowser,
+                                            )
+                                        } else {
+                                            navigateToArticle(articleWithFeed.article.id, index)
+                                        }
+                                    },
+                                    onToggleStarred = onToggleStarred,
+                                    onToggleRead = onToggleRead,
+                                    onMarkAboveAsRead = onMarkAboveAsRead,
+                                    onMarkBelowAsRead = onMarkBelowAsRead,
+                                    onShare = onShare,
                                 )
+                                item {
+                                    Spacer(modifier = Modifier.height(128.dp))
+                                    Spacer(
+                                        modifier =
+                                            Modifier.windowInsetsBottomHeight(
+                                                WindowInsets.navigationBars
+                                            )
+                                    )
+                                }
                             }
                         }
                     }

@@ -29,7 +29,7 @@ import java.util.*
         Group::class,
         ArchivedArticle::class,
     ],
-    version = 9,
+    version = 10,
     autoMigrations = [
         AutoMigration(from = 5, to = 6),
         AutoMigration(from = 5, to = 7),
@@ -92,7 +92,25 @@ val allMigrations = arrayOf(
     MIGRATION_2_3,
     MIGRATION_3_4,
     MIGRATION_4_5,
+    MIGRATION_9_10,
 )
+
+/**
+ * Rebuilds the search index with the unicode61 tokenizer, an unsearchable articleId and a column
+ * for Hebrew words without their prefixes. FTS tables cannot be altered in place, so the old one is
+ * dropped; ArticleIndexer refills it after the next sync.
+ */
+@Suppress("ClassName")
+object MIGRATION_9_10 : Migration(9, 10) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("DROP TABLE IF EXISTS `article_fts`")
+        db.execSQL(
+            "CREATE VIRTUAL TABLE IF NOT EXISTS `article_fts` USING FTS4(`articleId` TEXT NOT NULL, " +
+                "`content` TEXT NOT NULL, `variants` TEXT NOT NULL DEFAULT '', tokenize=unicode61, " +
+                "notindexed=`articleId`)"
+        )
+    }
+}
 
 @Suppress("ClassName")
 object MIGRATION_1_2 : Migration(1, 2) {

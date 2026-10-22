@@ -23,6 +23,7 @@ constructor(
     private val rssService: RssService,
     private val readerCacheHelper: ReaderCacheHelper,
     private val articleFtsDao: ArticleFtsDao,
+    private val articleIndexer: ArticleIndexer,
     private val articleDao: ArticleDao,
     private val syncHistoryLogger: SyncHistoryLogger,
     private val appForegroundTracker: AppForegroundTracker,
@@ -78,6 +79,10 @@ constructor(
                 rssService.get().clearKeepArchivedArticles().forEach {
                     readerCacheHelper.deleteCacheFor(articleId = it.id)
                     articleFtsDao.deleteByArticleId(articleId = it.id)
+                }
+                // Every article searchable as it arrives, not only those the downloader reaches.
+                articleIndexer.indexNewArticles(accountId) {
+                    readerCacheHelper.readFullContent(it).getOrNull()
                 }
                 workManager
                     .beginUniqueWork(

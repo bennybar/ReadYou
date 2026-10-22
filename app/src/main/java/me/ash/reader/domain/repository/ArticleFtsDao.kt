@@ -4,7 +4,9 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Transaction
+import me.ash.reader.domain.model.article.Article
 import me.ash.reader.domain.model.article.ArticleFts
+import me.ash.reader.domain.model.article.hebrewVariants
 
 @Dao
 interface ArticleFtsDao {
@@ -22,8 +24,27 @@ interface ArticleFtsDao {
     @Transaction
     suspend fun upsert(articleId: String, content: String) {
         deleteByArticleId(articleId)
-        insert(ArticleFts(articleId = articleId, content = content))
+        insert(ArticleFts(articleId = articleId, content = content, variants = hebrewVariants(content)))
     }
+
+    /** Articles of the account that have no index entry yet, oldest first, a page at a time. */
+    @Query(
+        """
+        SELECT * FROM article WHERE accountId = :accountId
+        AND id NOT IN (SELECT articleId FROM article_fts)
+        LIMIT :limit
+        """
+    )
+    suspend fun queryUnindexed(accountId: Int, limit: Int): List<Article>
+
+    /** The words around the match in the article's text, for a search result's description. */
+    @Query(
+        """
+        SELECT snippet(article_fts, '', '', '…', 1, 24) FROM article_fts
+        WHERE articleId = :articleId AND article_fts MATCH :match LIMIT 1
+        """
+    )
+    suspend fun snippet(articleId: String, match: String): String?
 
     @Query("SELECT articleId FROM article_fts WHERE articleId IN (:articleIds)")
     suspend fun queryIndexedIds(articleIds: List<String>): List<String>

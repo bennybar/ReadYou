@@ -25,6 +25,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import me.ash.reader.domain.model.article.ftsMatchQuery
+import me.ash.reader.domain.repository.ArticleFtsDao
 import me.ash.reader.domain.data.ArticlePagingListUseCase
 import me.ash.reader.domain.data.DiffMapHolder
 import me.ash.reader.domain.data.FilterState
@@ -64,6 +67,7 @@ constructor(
     private val groupWithFeedsListUseCase: GroupWithFeedsListUseCase,
     private val settingsProvider: SettingsProvider,
     private val readerCacheHelper: ReaderCacheHelper,
+    private val articleFtsDao: ArticleFtsDao,
     val textToSpeechManager: TextToSpeechManager,
     private val imageDownloader: AndroidImageDownloader,
     private val articleListUseCase: ArticlePagingListUseCase,
@@ -254,6 +258,10 @@ constructor(
             filterState.filter,
         )
     }
+
+    /** The words around a search match deep in an article, for its line in the results. */
+    suspend fun searchSnippet(articleId: String, content: String): String? =
+        withContext(ioDispatcher) { articleFtsDao.snippet(articleId, ftsMatchQuery(content)) }
 
     fun inputSearchContent(content: String? = null) {
         if (content != filterStateUseCase.filterStateFlow.value.searchContent)

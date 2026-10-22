@@ -11,6 +11,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import me.ash.reader.domain.model.article.Article
 import me.ash.reader.domain.service.AccountService
+import me.ash.reader.domain.service.ArticleIndexer
 import me.ash.reader.infrastructure.android.ARCHIVE_READABILITY
 import me.ash.reader.infrastructure.android.archiveDir
 import me.ash.reader.infrastructure.di.IODispatcher
@@ -33,6 +34,7 @@ constructor(
     @IODispatcher private val ioDispatcher: CoroutineDispatcher,
     private val rssHelper: RssHelper,
     private val accountService: AccountService,
+    private val articleIndexer: ArticleIndexer,
 ) {
     // filesDir, not cacheDir: the archive is meant to survive, and Android deletes caches.
     private val cacheDir = archiveDir(context, ARCHIVE_READABILITY)
@@ -165,6 +167,9 @@ constructor(
                 val fullContent = rssHelper.parseFullContent(article.link, article.title)
                 if (fullContent.isNotBlank()) {
                     writeContentToCache(fullContent, article.id)
+                    // Wherever the full text came from, the reader or the downloader, search has
+                    // to see it rather than the summary it may have been indexed from.
+                    articleIndexer.index(article, fullContent)
                     clearFailure(article.id)
                     fullContent
                 } else return@withContext Result.failure(Exception())
