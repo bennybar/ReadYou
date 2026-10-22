@@ -38,6 +38,10 @@ import kotlin.math.roundToInt
  * @param swipeThreshold Minimum drag distance before any [SwipeAction] is
  * activated and can be swiped.
  *
+ * @param swipeThresholdFraction When set, the threshold is this fraction of the box's width
+ * instead of [swipeThreshold]. A fixed 40dp is about a tenth of a phone-wide row, so an action
+ * fired after barely moving the item.
+ *
  * @param backgroundUntilSwipeThreshold Color drawn behind the content until
  * [swipeThreshold] is reached. When the threshold is passed, this color is
  * replaced by the currently visible [SwipeAction]'s background.
@@ -53,6 +57,7 @@ fun SwipeableActionsBox(
   startActions: List<SwipeAction> = emptyList(),
   endActions: List<SwipeAction> = emptyList(),
   swipeThreshold: Dp = 40.dp,
+  swipeThresholdFraction: Float? = null,
   backgroundUntilSwipeThreshold: Color = Color.DarkGray,
   actionShape: Shape = RectangleShape,
   actionGap: Dp = 0.dp,
@@ -60,7 +65,10 @@ fun SwipeableActionsBox(
 ) = Box(modifier) {
   val actionGapPx = LocalDensity.current.run { actionGap.toPx() }
   state.also {
-    it.swipeThresholdPx = LocalDensity.current.run { swipeThreshold.toPx() }
+    val fixedThresholdPx = LocalDensity.current.run { swipeThreshold.toPx() }
+    it.swipeThresholdPx =
+      if (swipeThresholdFraction != null && it.layoutWidth > 0) it.layoutWidth * swipeThresholdFraction
+      else fixedThresholdPx
     val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
     it.actions = remember(endActions, startActions, isRtl) {
       ActionFinder(

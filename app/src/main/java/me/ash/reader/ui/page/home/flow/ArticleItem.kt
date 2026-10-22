@@ -634,6 +634,7 @@ private fun SwipeActionBox(
         modifier = modifier,
         startActions = listOfNotNull(startAction),
         endActions = listOfNotNull(endAction),
+        swipeThresholdFraction = PositionalThresholdFraction,
         // In the expressive style the action color shows from the first pixel, instead of the
         // surface jumping to it once the swipe passes the threshold.
         backgroundUntilSwipeThreshold =
