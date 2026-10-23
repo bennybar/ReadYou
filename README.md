@@ -29,7 +29,7 @@ ReadYou has felt close to abandoned over the last few months: its last release w
 - **You can see whether background sync works**: a sync log, a "Sync failed" label, and a one-tap battery exemption.
 - **Unread count on the app icon**, where the launcher supports it.
 - **What's new** after each update: a sheet of what changed since the version you had, once, and the full list in *Settings → What's new*.
-- **Material 3 Expressive look** (*Settings → Color & style → Expressive style*, on by default): bolder headers, tonal filter cards with their counts on the home screen, a floating filter toolbar, articles as rounded cards with an "Offline" or "Text only" chip, in the reader a floating toolbar with a large Next button and a wavy line while the fresh copy downloads, and on the Offline page a card showing how much of the archive is used, how the last download went, and Download now. Turn it off for the original ReadYou screens.
+- **Material 3 Expressive look** (*Settings → Color & style → Expressive style*, on by default): bolder headers, tonal filter cards with their counts on the home screen, a floating filter toolbar, articles as rounded cards with a "Saved" or "Text saved" chip, in the reader a floating toolbar with a large Next button and a wavy line while the fresh copy downloads, and on the Offline page a card showing how much of the archive is used, how the last download went, and Download now. Turn it off for the original ReadYou screens.
 
 Everything below is what differs from ReadYou.
 

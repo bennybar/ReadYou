@@ -1,5 +1,7 @@
 package me.ash.reader.ui.page.home.flow
 
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.rounded.DownloadDone
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.runtime.CompositionLocalProvider
 import me.ash.reader.infrastructure.preference.LocalExpressiveStyle
@@ -406,7 +408,12 @@ fun StarredIcon(modifier: Modifier = Modifier) {
 fun OfflineChip(state: OfflineState, modifier: Modifier = Modifier) {
     if (state == OfflineState.NONE) return
     val ready = state == OfflineState.READY
-    Text(
+    val content =
+        if (ready) MaterialTheme.colorScheme.onPrimaryContainer
+        else MaterialTheme.colorScheme.onSurfaceVariant
+    // "Saved", not "Offline": offline reads as a connection problem. A download-done glyph when
+    // the article and all its images are kept, a document when only the text is.
+    Row(
         modifier =
             modifier
                 .padding(end = 6.dp)
@@ -415,14 +422,23 @@ fun OfflineChip(state: OfflineState, modifier: Modifier = Modifier) {
                     if (ready) MaterialTheme.colorScheme.primaryContainer
                     else MaterialTheme.colorScheme.surfaceContainerHighest
                 )
-                .padding(horizontal = 8.dp, vertical = 2.dp),
-        text = stringResource(if (ready) R.string.offline_chip else R.string.text_only_chip),
-        style = MaterialTheme.typography.labelMedium,
-        fontWeight = FontWeight.SemiBold,
-        color =
-            if (ready) MaterialTheme.colorScheme.onPrimaryContainer
-            else MaterialTheme.colorScheme.onSurfaceVariant,
-    )
+                .padding(start = 6.dp, end = 8.dp, top = 2.dp, bottom = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = if (ready) Icons.Rounded.DownloadDone else Icons.Outlined.Description,
+            contentDescription = null,
+            tint = content,
+            modifier = Modifier.size(14.dp),
+        )
+        Spacer(modifier = Modifier.width(4.dp))
+        Text(
+            text = stringResource(if (ready) R.string.offline_chip else R.string.text_only_chip),
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = content,
+        )
+    }
 }
 
 /** A pin when the article can be read offline: solid with its images, faint for text only. */

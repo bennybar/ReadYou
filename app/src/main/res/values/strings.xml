@@ -470,10 +470,10 @@
     <string name="archive_text_size">Saved article text: %1$s</string>
     <string name="offline_desc">Downloads, image archive, search</string>
     <string name="download_progress_stop">Downloading %1$d of %2$d… Tap to stop</string>
-    <string name="available_offline">Available offline</string>
-    <string name="offline_chip">Offline</string>
-    <string name="text_only_chip">Text only</string>
-    <string name="text_only_offline">Text available offline, some images missing</string>
+    <string name="available_offline">Saved with its images</string>
+    <string name="offline_chip">Saved</string>
+    <string name="text_only_chip">Text saved</string>
+    <string name="text_only_offline">Text saved, some images missing</string>
     <string name="refreshing_article">Getting the latest version</string>
     <string name="enable">Enable</string>
     <string name="disable">Disable</string>
