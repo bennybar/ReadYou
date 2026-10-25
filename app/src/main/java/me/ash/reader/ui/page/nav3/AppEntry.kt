@@ -121,6 +121,7 @@ fun AppEntry(backStack: NavBackStack<NavKey>) {
                                 navigateToSettings = { backStack.add(Route.Settings) },
                                 navigationToFlow = { backStack.add(Route.Reading(null)) },
                                 navigateToWhatsNew = { backStack.add(Route.WhatsNew) },
+                                navigateToArticle = { backStack.add(Route.Reading(it)) },
                                 navigateToAccountList = { backStack.add(Route.Accounts) },
                                 navigateToAccountDetail = {
                                     backStack.add(Route.AccountDetails(it))

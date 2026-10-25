@@ -1,5 +1,7 @@
 package me.ash.reader.ui.page.home.reading.tts
 
+import me.ash.reader.infrastructure.preference.LocalExpressiveStyle
+import androidx.compose.material3.CircularWavyProgressIndicator
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.widget.Toast
@@ -127,14 +129,22 @@ fun TtsProgressIndicator(progress: (() -> Float), modifier: Modifier = Modifier)
         targetValue = progress(),
         animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec
     )
-    CircularProgressIndicator(
-        progress = { animatedProgress },
-        modifier = modifier.size(24.dp),
-        gapSize = 0.dp,
-        strokeCap = StrokeCap.Butt,
-        trackColor = MaterialTheme.colorScheme.outlineVariant,
-        strokeWidth = 3.dp
-    )
+    if (LocalExpressiveStyle.current.value) {
+        CircularWavyProgressIndicator(
+            progress = { animatedProgress },
+            modifier = modifier.size(24.dp),
+            trackColor = MaterialTheme.colorScheme.outlineVariant,
+        )
+    } else {
+        CircularProgressIndicator(
+            progress = { animatedProgress },
+            modifier = modifier.size(24.dp),
+            gapSize = 0.dp,
+            strokeCap = StrokeCap.Butt,
+            trackColor = MaterialTheme.colorScheme.outlineVariant,
+            strokeWidth = 3.dp
+        )
+    }
 }
 
 @Preview

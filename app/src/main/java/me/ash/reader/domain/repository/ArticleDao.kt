@@ -1131,6 +1131,14 @@ interface ArticleDao {
     )
     fun countReadLater(accountId: Int): Flow<Int>
 
+    @Query(
+        """
+        SELECT * FROM article WHERE accountId = :accountId AND isDuplicate = 0 AND isReadLater = 1
+        ORDER BY date DESC LIMIT :limit
+        """
+    )
+    fun queryReadLater(accountId: Int, limit: Int): Flow<List<Article>>
+
     @Query("UPDATE article SET isDuplicate = 0 WHERE accountId = :accountId AND isDuplicate = 1")
     suspend fun clearDuplicates(accountId: Int)
 

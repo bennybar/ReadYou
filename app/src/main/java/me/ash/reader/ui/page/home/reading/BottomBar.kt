@@ -257,6 +257,7 @@ private fun ExpressiveBottomBar(
         ) {
             IconToggleButton(
                 colors = toggleColors,
+                shapes = IconButtonDefaults.toggleableShapes(),
                 checked = isUnread,
                 onCheckedChange = {
                     onToggle()
@@ -272,6 +273,7 @@ private fun ExpressiveBottomBar(
             }
             IconToggleButton(
                 colors = toggleColors,
+                shapes = IconButtonDefaults.toggleableShapes(),
                 checked = isStarred,
                 onCheckedChange = {
                     onToggle()
@@ -286,6 +288,7 @@ private fun ExpressiveBottomBar(
             }
             IconToggleButton(
                 colors = toggleColors,
+                shapes = IconButtonDefaults.toggleableShapes(),
                 checked = isReadLater,
                 onCheckedChange = {
                     onToggle()
@@ -300,6 +303,7 @@ private fun ExpressiveBottomBar(
             ttsButton()
             IconToggleButton(
                 colors = toggleColors,
+                shapes = IconButtonDefaults.toggleableShapes(),
                 checked = isFullContent,
                 onCheckedChange = {
                     onToggle()

@@ -1,5 +1,7 @@
 package me.ash.reader.ui.page.settings.offline
 
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.LinearWavyProgressIndicator
 import me.ash.reader.infrastructure.preference.LocalRememberReadingPosition
 import me.ash.reader.infrastructure.preference.LocalExpressiveStyle
 import me.ash.reader.domain.data.PrefetchSummary
@@ -335,6 +337,7 @@ fun OfflinePage(onBack: () -> Unit, prefetchViewModel: PrefetchViewModel = hiltV
  * The expressive style's archive summary: how much of the image archive is used, how the last
  * download went (or how far the current one is), and Download now / Stop.
  */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ArchiveCard(
     usage: PrefetchViewModel.ArchiveUsage?,
@@ -388,6 +391,14 @@ private fun ArchiveCard(
                             binarySize(usage.textBytes),
                         ),
                     style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            if (progress != null && progress.total > 0) {
+                LinearWavyProgressIndicator(
+                    progress = { progress.current.toFloat() / progress.total },
+                    modifier = Modifier.fillMaxWidth(),
+                    color = colors.primary,
+                    trackColor = colors.surface,
                 )
             }
             val status =

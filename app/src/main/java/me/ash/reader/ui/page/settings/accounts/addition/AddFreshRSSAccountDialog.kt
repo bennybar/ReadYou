@@ -1,5 +1,9 @@
+@file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
+
 package me.ash.reader.ui.page.settings.accounts.addition
 
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.LoadingIndicator
 import android.app.Activity
 import android.security.KeyChain
 import androidx.compose.foundation.clickable
@@ -12,7 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -78,7 +81,7 @@ fun AddFreshRSSAccountDialog(
         },
         icon = {
             if (accountUiState.isLoading) {
-                CircularProgressIndicator(
+                LoadingIndicator(
                     modifier = Modifier
                         .size(24.dp),
                     color = MaterialTheme.colorScheme.onSurface,

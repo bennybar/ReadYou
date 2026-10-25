@@ -1,5 +1,6 @@
 package me.ash.reader.ui.page.home.feeds
 
+import me.ash.reader.domain.model.article.Article
 import kotlinx.coroutines.flow.flatMapLatest
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.mutableStateMapOf
@@ -103,6 +104,11 @@ class FeedsViewModel @Inject constructor(
                 .collect { (starred, readLater) ->
                     _feedsUiState.update { it.copy(starredCount = starred, readLaterCount = readLater) }
                 }
+        }
+        viewModelScope.launch {
+            accountFlow
+                .flatMapLatest { rssService.get().readLaterArticles() }
+                .collect { articles -> _feedsUiState.update { it.copy(readLater = articles) } }
         }
         viewModelScope.launch {
             filterStateUseCase.filterStateFlow.mapLatest { it.filter }
@@ -236,6 +242,7 @@ data class FeedsUiState(
     val importantCount: Int = 0,
     val starredCount: Int = 0,
     val readLaterCount: Int = 0,
+    val readLater: List<Article> = emptyList(),
     val listState: LazyListState = LazyListState(),
     val groupsVisible: SnapshotStateMap<String, Boolean> = mutableStateMapOf(),
 )

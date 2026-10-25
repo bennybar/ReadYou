@@ -314,6 +314,10 @@ abstract class AbstractRssRepository(
     fun countReadLater(): Flow<Int> =
         articleDao.countReadLater(accountService.getCurrentAccountId())
 
+    /** The newest Read Later articles, for the home screen's carousel. */
+    fun readLaterArticles(limit: Int = 12): Flow<List<Article>> =
+        articleDao.queryReadLater(accountService.getCurrentAccountId(), limit)
+
     fun pullImportant(isStarred: Boolean, isUnread: Boolean): Flow<Map<String, Int>> {
         val accountId = accountService.getCurrentAccountId()
         Log.i(

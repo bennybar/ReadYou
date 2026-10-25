@@ -1,5 +1,7 @@
 package me.ash.reader.ui.page.home.feeds
 
+import me.ash.reader.domain.model.general.Filter
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import me.ash.reader.ui.page.settings.whatsnew.WhatsNewSheet
 import me.ash.reader.infrastructure.preference.LocalExpressiveStyle
 import androidx.activity.compose.BackHandler
@@ -90,7 +92,11 @@ import me.ash.reader.ui.page.home.feeds.subscribe.SubscribeDialog
 import me.ash.reader.ui.page.home.feeds.subscribe.SubscribeViewModel
 import me.ash.reader.ui.page.settings.accounts.AccountViewModel
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
+@OptIn(
+    ExperimentalMaterial3Api::class,
+    ExperimentalSharedTransitionApi::class,
+    androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class,
+)
 @Composable
 fun FeedsPage(
     //    navController: NavHostController,
@@ -102,6 +108,7 @@ fun FeedsPage(
     navigateToSettings: () -> Unit,
     navigationToFlow: () -> Unit,
     navigateToWhatsNew: () -> Unit = {},
+    navigateToArticle: (articleId: String) -> Unit = {},
     navigateToAccountList: () -> Unit,
     navigateToAccountDetail: (Int) -> Unit,
 ) {
@@ -233,7 +240,27 @@ fun FeedsPage(
             )
         },
         content = {
-            PullToRefreshBox(state = syncingState, isRefreshing = isSyncing, onRefresh = doSync) {
+            PullToRefreshBox(
+                state = syncingState,
+                isRefreshing = isSyncing,
+                onRefresh = doSync,
+                indicator = {
+                    // The contained expressive indicator, like the article list's pull to sync.
+                    if (expressiveStyle.value) {
+                        PullToRefreshDefaults.LoadingIndicator(
+                            state = syncingState,
+                            isRefreshing = isSyncing,
+                            modifier = Modifier.align(Alignment.TopCenter),
+                        )
+                    } else {
+                        PullToRefreshDefaults.Indicator(
+                            state = syncingState,
+                            isRefreshing = isSyncing,
+                            modifier = Modifier.align(Alignment.TopCenter),
+                        )
+                    }
+                },
+            ) {
                 LazyColumn(modifier = Modifier.fillMaxSize().drawVerticalScrollIndicator(listState), state = listState) {
                     item {
                         DisplayText(
@@ -265,6 +292,19 @@ fun FeedsPage(
                             ) {
                                 feedsViewModel.changeFilter(filterState.copy(group = null, feed = null))
                                 navigationToFlow()
+                            }
+                        }
+                    }
+
+                    if (expressiveStyle.value && feedsUiState.readLater.isNotEmpty()) {
+                        item {
+                            ReadLaterCarousel(articles = feedsUiState.readLater) { article ->
+                                // The list behind the reader is Read Later, so next and previous
+                                // stay among the saved articles.
+                                feedsViewModel.changeFilter(
+                                    filterState.copy(filter = Filter.ReadLater, group = null, feed = null)
+                                )
+                                navigateToArticle(article.id)
                             }
                         }
                     }
