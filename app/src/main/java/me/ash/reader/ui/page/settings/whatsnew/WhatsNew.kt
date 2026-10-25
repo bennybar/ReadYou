@@ -56,6 +56,16 @@ class Release(val version: String, val date: String, val highlights: List<String
 val CHANGELOG =
     listOf(
         Release(
+            "0.26.7",
+            "Oct 25, 2026",
+            listOf(
+                "Your Read Later articles as a picture carousel on the home screen",
+                "Reader toggles change shape when they're on",
+                "A wavy progress line while downloading articles for offline",
+                "The new loading indicator when you pull to refresh on the home screen",
+            ),
+        ),
+        Release(
             "0.26.6",
             "Oct 23, 2026",
             listOf("Downloaded articles say \"Saved\" (or \"Text saved\") with an icon, instead of \"Offline\""),
